@@ -1,0 +1,62 @@
+NAME
+    Test::Assert - Assertion methods for those who like JUnit.
+
+SYNOPSIS
+      package My::TestMethod;
+      use base 'Test::Assert';
+      sub test_method {
+        my $self = shift;
+        $self->assert_true(1, "pass");
+        $self->assert_true(0, "fail");
+      }
+
+      package My::Test;
+      use Test::Assert ':all';
+      assert_true(1, "pass");
+      assert_true(0, "fail");
+      use Test::More;
+      assert_test(sub { require_ok($module) });
+
+      package My::Package;
+      use Test::Assert 'fail';
+      my $state = do_something();
+      if ($state == 1) {
+         # 1st state
+         do_foo();
+      } elsif ($state == 2) {
+         # 2nd and last state
+         do_bar();
+      } else {
+         # this shouldn't happen: assert default value
+         fail("Unknown state: $state");
+      }
+      my $a = get_a();
+      my $b = get_b();
+      assert_num_not_equals(0, $b, 'Division by zero');
+      my $c = $a / $b;
+
+DESCRIPTION
+    This class provides a set of assertion methods useful for writing tests.
+    The API is based on JUnit4 and Test::Unit and the methods die on
+    failure.
+
+    The assertion methods can be used in class which is derived from
+    Test::Assert or used as standard Perl functions after importing them
+    into user's namespace.
+
+    Test::Assert can also wrap standard Test::Simple, Test::More or other
+    Test::Builder-based tests.
+
+    The assertions can be also used for run-time checking.
+
+AUTHOR
+    Piotr Roszatycki <dexter@debian.org>
+
+COPYRIGHT
+    Copyright (C) 2008 by Piotr Roszatycki <dexter@debian.org>.
+
+    This program is free software; you can redistribute it and/or modify it
+    under the same terms as Perl itself.
+
+    See http://www.perl.com/perl/misc/Artistic.html
+
