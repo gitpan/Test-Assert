@@ -3,16 +3,16 @@ require 5.006;
 use ExtUtils::MakeMaker;
 WriteMakefile
 (
+          'PL_FILES' => {},
+          'INSTALLDIRS' => 'site',
           'NAME' => 'Test::Assert',
+          'EXE_FILES' => [],
           'VERSION_FROM' => 'lib/Test/Assert.pm',
           'PREREQ_PM' => {
-                           'Exception::Base' => '0.19',
-                           'Exception::Died' => '0.03',
                            'Exception::Warning' => '0.02',
-                           'Test::Unit::Lite' => '0.1'
-                         },
-          'INSTALLDIRS' => 'site',
-          'EXE_FILES' => [],
-          'PL_FILES' => {}
+                           'Test::Unit::Lite' => '0.1',
+                           'Exception::Died' => '0.03',
+                           'Exception::Base' => '0.2'
+                         }
         )
 ;

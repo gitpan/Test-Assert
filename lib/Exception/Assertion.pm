@@ -2,7 +2,7 @@
 
 package Exception::Assertion;
 use 5.006;
-our $VERSION = 0.01;
+our $VERSION = 0.02;
 
 =head1 NAME
 
@@ -33,13 +33,14 @@ failed.
 =cut
 
 
-use Exception::Base 0.19
+use Exception::Base 0.20
     'Exception::Assertion' => {
         has       => 'reason',
         message   => 'Unknown assertion failed',
         verbosity => 3,
-        stringify_attributes => [ 'message', 'reason' ],
+        string_attributes => [ 'message', 'reason' ],
     };
+
 
 1;
 
@@ -50,13 +51,14 @@ __END__
 
 = Class Diagram =
 
-[                  <<exception>>
-                Exception::Assertion
- -------------------------------------------------
- +message : Str = "Unknown assertion failed" {new}
- +verbosity : Int = 3                        {new}
- +reason : Str                               {new}
- -------------------------------------------------]
+[                    <<exception>>
+                  Exception::Assertion
+ ----------------------------------------------------------
+ +message : Str = "Unknown assertion failed"          {new}
+ +verbosity : Int = 3                                 {new}
+ +reason : Str                                        {new}
+ #string_attributes : ArrayRef[Str] = ["message", "reason"]
+ ----------------------------------------------------------]
 
 [Exception::Assertion] ---|> [Exception::Base]
 
@@ -104,6 +106,12 @@ overrides the default value from L<Exception::Base> class.
 =item reason (rw)
 
 Contains the additional message filled by assertion method.
+
+=item string_attributes (default: ['message', 'reason'])
+
+Meta-attribute contains the format of string representation of exception
+object.  This class overrides the default value from L<Exception::Base>
+class.
 
 =back
 

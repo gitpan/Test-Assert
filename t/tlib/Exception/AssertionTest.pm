@@ -31,15 +31,19 @@ sub test_accessor {
     assert_equals('New reason', $obj->reason);
 }
 
-sub test_stringify {
+sub test_to_string {
     my $obj = Exception::Assertion->new(message=>'Message', reason=>'Reason');
     assert_not_null($obj);
     assert_true($obj->isa("Exception::Assertion"), '$obj->isa("Exception::Assertion")');
     assert_true($obj->isa("Exception::Base"), '$obj->isa("Exception::Base")');
-    assert_equals('', $obj->stringify(0));
-    assert_equals("Message: Reason\n", $obj->stringify(1));
-    assert_matches(qr/Message: Reason at .* line \d+.\n/s, $obj->stringify(2));
-    assert_matches(qr/Exception::Assertion: Message: Reason at .* line \d+\n/s, $obj->stringify(3));
+    $obj->{verbosity} = 0;
+    assert_equals('', $obj->to_string);
+    $obj->{verbosity} = 1;
+    assert_equals("Message: Reason\n", $obj->to_string);
+    $obj->{verbosity} = 2;
+    assert_matches(qr/Message: Reason at .* line \d+.\n/s, $obj->to_string);
+    $obj->{verbosity} = 3;
+    assert_matches(qr/Exception::Assertion: Message: Reason at .* line \d+\n/s, $obj->to_string);
 }
 
 1;
