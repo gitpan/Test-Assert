@@ -2,6 +2,7 @@ NAME
     Test::Assert - Assertion methods for those who like JUnit.
 
 SYNOPSIS
+      # Use as base class
       package My::TestMethod;
       use base 'Test::Assert';
       sub test_method {
@@ -10,6 +11,7 @@ SYNOPSIS
         $self->assert_true(0, "fail");
       }
 
+      # Use as imported methods
       package My::Test;
       use Test::Assert ':all';
       assert_true(1, "pass");
@@ -17,23 +19,26 @@ SYNOPSIS
       use Test::More;
       assert_test(sub { require_ok($module) });
 
+      # Use for debugging purposes
+      # Assertions are compiled only if Test::Assert was used
+      # in the main package.
       package My::Package;
-      use Test::Assert 'fail';
+      use Test::Assert 'fail', 'DEBUG';
       my $state = do_something();
+      assert_true($state >= 1 && $state <=2) if DEBUG;
       if ($state == 1) {
-         # 1st state
-         do_foo();
+          # 1st state
+          do_foo();
       } elsif ($state == 2) {
-         # 2nd and last state
-         do_bar();
-      } else {
-         # this shouldn't happen: assert default value
-         fail("Unknown state: $state");
+          # 2nd and last state
+          do_bar();
       }
       my $a = get_a();
       my $b = get_b();
-      assert_num_not_equals(0, $b, 'Division by zero');
+      assert_num_not_equals(0, $b) if DEBUG;
       my $c = $a / $b;
+
+      $ perl -MTest::Assert script.pl  # sets Test::Assert::DEBUG to 1
 
 DESCRIPTION
     This class provides a set of assertion methods useful for writing tests.

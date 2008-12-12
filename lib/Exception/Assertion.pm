@@ -1,8 +1,6 @@
 #!/usr/bin/perl -c
 
 package Exception::Assertion;
-use 5.006;
-our $VERSION = 0.02;
 
 =head1 NAME
 
@@ -10,7 +8,7 @@ Exception::Assertion - Thrown when assertion failed
 
 =head1 SYNOPSIS
 
-  use Exception::Base 'Exception::Assertion';
+  use Exception::Assertion;
 
   sub assert_foo {
       my $self = eval { $_[0]->isa(__PACKAGE__) } ? shift : __PACKAGE__;
@@ -21,7 +19,7 @@ Exception::Assertion - Thrown when assertion failed
       );
   }
 
-  assert_foo(0, 'assert_foo(0)');
+  assert_foo( 0, 'assert_foo failed' );
 
 =head1 DESCRIPTION
 
@@ -32,14 +30,21 @@ failed.
 
 =cut
 
+use 5.006;
+use strict;
+use warnings;
 
-use Exception::Base 0.20
+our $VERSION = 0.03;
+
+
+use Exception::Base 0.20 (
     'Exception::Assertion' => {
         has       => 'reason',
         message   => 'Unknown assertion failed',
         verbosity => 3,
         string_attributes => [ 'message', 'reason' ],
-    };
+    },
+);
 
 
 1;

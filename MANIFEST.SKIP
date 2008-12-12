@@ -39,4 +39,5 @@
 \.ppd$
 \.tgz$
 \.deb$
+\bDebian_CPANTS.txt$
 \bTest-Assert-

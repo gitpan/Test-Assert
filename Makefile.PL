@@ -10,6 +10,7 @@ WriteMakefile
           'VERSION_FROM' => 'lib/Test/Assert.pm',
           'PREREQ_PM' => {
                            'Exception::Warning' => '0.02',
+                           'parent' => 0,
                            'Test::Unit::Lite' => '0.1',
                            'Exception::Died' => '0.03',
                            'Exception::Base' => '0.2'

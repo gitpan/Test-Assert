@@ -20,6 +20,7 @@ my $build = Module::Build->new(
         'Exception::Died'         => 0.03,
         'Exception::Warning'      => 0.02,
         'Test::Unit::Lite'        => 0.10,
+	'parent'                  => 0,
     },
     create_makefile_pl => 'traditional',
     create_readme => 1,
@@ -27,6 +28,7 @@ my $build = Module::Build->new(
     add_to_cleanup => [
         'META.yml', '*.bak', '*.gz', '*.tgz', '*.ppd', '*.deb', '*.bat',
         'Makefile.PL', 'Makefile', 'pm_to_blib', 'README', 'cover_db',
+        'Debian_CPANTS.txt',
         'Test-Assert-*',
     ],
 );

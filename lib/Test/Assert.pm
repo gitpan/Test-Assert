@@ -1,8 +1,6 @@
 #!/usr/bin/perl -c
 
 package Test::Assert;
-use 5.006;
-our $VERSION = 0.02;
 
 =head1 NAME
 
@@ -10,6 +8,7 @@ Test::Assert - Assertion methods for those who like JUnit.
 
 =head1 SYNOPSIS
 
+  # Use as base class
   package My::TestMethod;
   use base 'Test::Assert';
   sub test_method {
@@ -18,6 +17,7 @@ Test::Assert - Assertion methods for those who like JUnit.
     $self->assert_true(0, "fail");
   }
 
+  # Use as imported methods
   package My::Test;
   use Test::Assert ':all';
   assert_true(1, "pass");
@@ -25,23 +25,26 @@ Test::Assert - Assertion methods for those who like JUnit.
   use Test::More;
   assert_test(sub { require_ok($module) });
 
+  # Use for debugging purposes
+  # Assertions are compiled only if Test::Assert was used
+  # in the main package.
   package My::Package;
-  use Test::Assert 'fail';
+  use Test::Assert 'fail', 'DEBUG';
   my $state = do_something();
+  assert_true($state >= 1 && $state <=2) if DEBUG;
   if ($state == 1) {
-     # 1st state
-     do_foo();
+      # 1st state
+      do_foo();
   } elsif ($state == 2) {
-     # 2nd and last state
-     do_bar();
-  } else {
-     # this shouldn't happen: assert default value
-     fail("Unknown state: $state");
+      # 2nd and last state
+      do_bar();
   }
   my $a = get_a();
   my $b = get_b();
-  assert_num_not_equals(0, $b, 'Division by zero');
+  assert_num_not_equals(0, $b) if DEBUG;
   my $c = $a / $b;
+
+  $ perl -MTest::Assert script.pl  # sets Test::Assert::DEBUG to 1
 
 =head1 DESCRIPTION
 
@@ -62,25 +65,55 @@ The assertions can be also used for run-time checking.
 =cut
 
 
+use 5.006;
 use strict;
 use warnings;
 
+our $VERSION = 0.03;
 
-use Exception::Base
+
+use Exception::Base (
     '+ignore_class' => [ __PACKAGE__, 'Test::Builder' ],
-    'Exception::Assertion';
+    'Exception::Assertion',
+);
 
 
+# Debug mode is disabled by default
+use constant DEBUG => 0;
+
+
+# Export DEBUG flag, all assert_* methods and fail method
 use Exporter ();
-*import = \&Exporter::import;
-our @EXPORT_OK = grep { /^(assert_|fail)/ } keys %{*Test::Assert::};
-our %EXPORT_TAGS = (all => [ @EXPORT_OK ]);
+our @EXPORT_OK = ( 'DEBUG', grep { /^(assert_|fail)/ } keys %{ *Test::Assert:: } );
+our %EXPORT_TAGS = ( all => [ @EXPORT_OK ] );
 
 
 # Global and local variables required for assert_deep_equal
 our %Seen_Refs = ();
 our @Data_Stack;
 my $DNE = bless [], 'Does::Not::Exist';
+
+
+# Enable DEBUG mode
+sub import {
+    # Enable only if called from main
+    if (caller eq 'main') {
+        undef *DEBUG;
+        *DEBUG = sub () { 1 };
+    };
+    goto &Exporter::import;
+};
+
+
+# Disable DEBUG mode
+sub unimport {
+    # Disable only if called from main
+    if (caller eq 'main') {
+        undef *DEBUG;
+        *DEBUG = sub () { !! '' };
+    };
+    return 1;
+};
 
 
 # Fails a test with the given name.
@@ -93,7 +126,10 @@ sub fail (;$$) {
         message   => $message,
         reason    => $reason,
     );
-}
+
+    # never occured
+    return;
+};
 
 
 # Asserts that a condition is true.
@@ -103,7 +139,8 @@ sub assert_true ($;$) {
     my ($boolean, $message) = @_;
 
     $self->fail($message, 'Boolean assertion failed') unless $boolean;
-}
+    return 1;
+};
 
 
 # Asserts that a condition is false.
@@ -113,7 +150,8 @@ sub assert_false ($;$) {
     my ($boolean, $message) = @_;
 
     $self->fail($message, 'Boolean assertion failed') unless not $boolean;
-}
+    return 1;
+};
 
 
 # Asserts that a value is null.
@@ -123,7 +161,8 @@ sub assert_null ($;$) {
     my ($value, $message) = @_;
 
     $self->fail($message, "'$value' is defined") unless not defined $value;
-}
+    return 1;
+};
 
 
 # Asserts that a value is not null.
@@ -133,7 +172,8 @@ sub assert_not_null ($;$) {
     my ($value, $message) = @_;
 
     $self->fail($message, 'undef unexpected') unless defined $value;
-}
+    return 1;
+};
 
 
 # Assert that two values are equal
@@ -155,8 +195,9 @@ sub assert_equals ($$;$) {
     }
     else {
         $self->fail($message, "Expected '$value1', got '$value2'") unless $value1 eq $value2;
-    }
-}
+    };
+    return 1;
+};
 
 
 # Assert that two values are not equal
@@ -167,7 +208,7 @@ sub assert_not_equals ($$;$) {
 
     if (not defined $value1 and not defined $value2) {
         $self->fail($message, 'Both values were undefined');
-    }
+    };
     return 1 if (not defined $value1 xor not defined $value2);
     if ($value1 =~ /^[+-]?(\d+\.\d+|\d+\.|\.\d+|\d+)([eE][+-]?\d+)?$/ and
            $value2 =~ /^[+-]?(\d+\.\d+|\d+\.|\.\d+|\d+)([eE][+-]?\d+)?$/)
@@ -177,8 +218,9 @@ sub assert_not_equals ($$;$) {
     }
     else {
         $self->fail($message, "'$value1' and '$value2' should differ") unless $value1 ne $value2;
-    }
-}
+    };
+    return 1;
+};
 
 
 # Assert that two values are numerically equal
@@ -192,7 +234,8 @@ sub assert_num_equals ($$;$) {
     $self->fail($message, 'Expected undef, got ' . (0+$value2)) if not defined $value1;
     $self->fail($message, 'Expected ' . (0+$value1) . ', got undef') if not defined $value2;
     $self->fail($message, 'Expected ' . (0+$value1) . ', got ' . (0+$value2)) unless $value1 == $value2;
-}
+    return 1;
+};
 
 
 # Assert that two values are numerically not equal
@@ -203,11 +246,12 @@ sub assert_num_not_equals ($$;$) {
     my ($value1, $value2, $message) = @_;
     if (not defined $value1 and not defined $value2) {
         $self->fail($message, 'Both values were undefined');
-    }
+    };
     return 1 if (not defined $value1 xor not defined $value2);
     no warnings 'numeric';
     $self->fail($message, (0+$value1) . ' and ' . (0+$value2) . ' should differ') unless $value1 != $value2;
-}
+    return 1;
+};
 
 
 # Assert that two strings are equal
@@ -222,7 +266,8 @@ sub assert_str_equals ($$;$) {
     ) unless defined $value1;
     $self->fail($message, "Expected '$value1', got undef") unless defined $value2;
     $self->fail($message, "Expected '$value1', got '$value2'") unless "$value1" eq "$value2";
-}
+    return 1;
+};
 
 
 # Assert that two strings are not equal
@@ -233,10 +278,11 @@ sub assert_str_not_equals ($$;$) {
     my ($value1, $value2, $message) = @_;
     if (not defined $value1 and not defined $value2) {
         $self->fail($message, 'Both values were undefined');
-    }
+    };
     return 1 if (not defined $value1 xor not defined $value2);
     $self->fail($message, "'$value1' and '$value2' should differ") unless "$value1" ne "$value2";
-}
+    return 1;
+};
 
 
 # Assert that string matches regexp
@@ -253,7 +299,8 @@ sub assert_matches ($$;$) {
     ) unless ref $regexp eq 'Regexp';
     $self->fail($message, "Expected /$regexp/, got undef") unless defined $value;
     $self->fail($message, "'$value' didn't match /$regexp/") unless $value =~ $regexp;
-}
+    return 1;
+};
 
 
 # Assert that string matches regexp
@@ -270,7 +317,8 @@ sub assert_not_matches ($$;$) {
         $message, 'Argument 1 to assert_not_matches() must be a regexp'
     ) unless ref $regexp eq 'Regexp';
     $self->fail($message, "'$value' matched /$regexp/") unless $value !~ $regexp;
-}
+    return 1;
+};
 
 
 # Assert that data structures are deeply equal
@@ -287,7 +335,8 @@ sub assert_deep_equals ($$;$) {
     $self->fail(
         $message, $self->_format_stack(@Data_Stack)
     ) unless $self->_deep_check($value1, $value2);
-}
+    return 1;
+};
 
 
 # Assert that data structures are deeply equal
@@ -304,7 +353,27 @@ sub assert_deep_not_equals ($$;$) {
     $self->fail(
         $message, 'Both structures should differ'
     ) unless not $self->_deep_check($value1, $value2);
-}
+    return 1;
+};
+
+
+# Assert that code throws an exception
+sub assert_isa ($$;$) {
+    # check if called as function
+    my $self = eval { $_[0]->isa(__PACKAGE__) } ? shift : __PACKAGE__;
+
+    my ($class, $value, $message) = @_;
+
+    $self->fail(
+        $message, 'Class name was undef; should be using assert_null?'
+    ) unless defined $class;
+    $self->fail($message, "Expected '$class' object or class, got undef") unless defined $value;
+    if (not eval { $value->isa($class) } ) {
+        $self->fail($message, "Expected '$class' object or class, got '" . ref($value) . "' reference") if ref $value;
+        $self->fail($message, "Expected '$class' object or class, got '$value' value");
+    };
+    return 1;
+};
 
 
 # Assert that code throws an exception
@@ -334,8 +403,8 @@ sub assert_raises ($&;$) {
                 while ($message =~ s/\t\.\.\.propagated at (?!.*\bat\b.*).* line \d+( thread \d+)?\.\n$//s) { }
                 $message =~ s/( at (?!.*\bat\b.*).* line \d+( thread \d+)?\.)?\n$//s;
                 return 1 if $message eq $expected;
-            }
-        }
+            };
+        };
         # Rethrow an exception
         die $e;
     }
@@ -343,8 +412,9 @@ sub assert_raises ($&;$) {
         $self->fail(
             $message, 'Expected exception was not raised'
         );
-    }
-}
+    };
+    return 1;
+};
 
 
 # Assert that Test::Builder method is ok
@@ -379,9 +449,9 @@ sub assert_test (&;$) {
         $self->fail(
             $new_message, 'assert_test failed'
         ) unless $ok_return;
-    }
+    };
     return 1;
-}
+};
 
 
 # Checks if deep structures are equal
@@ -392,14 +462,14 @@ sub _deep_check {
         return 1 if !defined $e1 && !defined $e2;
         push @Data_Stack, { vals => [$e1, $e2] };
         return '';
-    }
+    };
 
     return 1 if $e1 eq $e2;
     if ( ref $e1 && ref $e2 ) {
         my $e2_ref = "$e2";
         return 1 if defined $Seen_Refs{$e1} && $Seen_Refs{$e1} eq $e2_ref;
         $Seen_Refs{$e1} = $e2_ref;
-    }
+    };
 
     if (ref $e1 eq 'ARRAY' and ref $e2 eq 'ARRAY') {
         return $self->_eq_array($e1, $e2);
@@ -419,9 +489,9 @@ sub _deep_check {
     }
     else {
         push @Data_Stack, { vals => [$e1, $e2] };
-        return '';
-    }
-}
+    };
+    return '';
+};
 
 
 # Checks if arrays are equal
@@ -440,9 +510,9 @@ sub _eq_array  {
         pop @Data_Stack if $ok;
 
         last unless $ok;
-    }
+    };
     return $ok;
-}
+};
 
 
 # Checks if hashes are equal
@@ -461,10 +531,10 @@ sub _eq_hash {
         pop @Data_Stack if $ok;
 
         last unless $ok;
-    }
+    };
 
     return $ok;
-}
+};
 
 
 # Dumps the differences for deep structures
@@ -486,8 +556,8 @@ sub _format_stack {
         }
         elsif( $type eq 'REF' ) {
             $var = "\${$var}";
-        }
-    }
+        };
+    };
 
     my @vals = @{$Stack[-1]{vals}}[0,1];
 
@@ -501,13 +571,13 @@ sub _format_stack {
         $vals[$idx] = !defined $val ? 'undef' :
                       $val eq $DNE  ? 'Does not exist'
                                     : "'$val'";
-    }
+    };
 
     $out .= "$vars[0] = $vals[0]\n";
     $out .= "$vars[1] = $vals[1]";
 
     return $out;
-}
+};
 
 
 1;
@@ -525,8 +595,8 @@ __END__
 
 = Class Diagram =
 
-[                          <<utility>>
-                          Test::Assert
+[                              <<utility>>
+                              Test::Assert
  ------------------------------------------------------------------------------
  ------------------------------------------------------------------------------
  fail( message : Str = undef, reason : Str = undef )
@@ -544,8 +614,10 @@ __END__
  assert_not_matches( regexp : RegexpRef, value : Str, message : Str = undef )
  assert_deep_equals( value1 : Ref, value2 : Ref, message : Str = undef )
  assert_deep_not_equals( value1 : Ref, value2 : Ref, message : Str = undef )
+ assert_isa( class : Str, object : Defined, message : Str = undef )
  assert_raises( expected : Any, code : CoreRef, message : Str = undef )
- assert_test( code : CoreRef, message : Str = undef )                           ]
+ assert_test( code : CoreRef, message : Str = undef )
+ <<constant>> DEBUG() : Bool                                                    ]
 
 [Test::Assert] ---> [<<exception>> Exception::Assertion]
 
@@ -569,9 +641,48 @@ By default, the class does not export its symbols.
 
 =over
 
+=item use Test::Assert;
+
+Enables debug mode if it is used in C<main> package.
+
+  package main;
+  use Test::Assert;    # Test::Assert::DEBUG is set to 1
+
+  $ perl -MTest::Assert script.pl    # ditto
+
+=item use Test::Assert 'assert_true', 'fail', ...;
+
+Imports some methods.
+
 =item use Test::Assert ':all';
 
-Imports all available symbols.
+Imports all C<assert_*> methods and C<fail> method.
+
+=item use Test::Assert 'DEBUG';
+
+Imports C<DEBUG> constant.
+
+=item no Test::Assert;
+
+Disables debug mode if it is used in C<main> package.
+
+=back
+
+=head1 CONSTANTS
+
+=over
+
+=item DEBUG
+
+This constant is set to true value if C<Test::Assert> module is used from
+C<main> package.  It allows to enable debug mode globally from command line.
+The debug mode is disabled by default.
+
+  package My::Test;
+  use Test::Assert ':all', 'DEBUG';
+  assert_true( 0 ) if DEBUG;  # fails only if debug mode is enabled
+
+  $ perl -MTest::Assert script.pl  # enable debug mode
 
 =back
 
@@ -631,6 +742,12 @@ Checks if I<value> matches I<pattern> regexp.
 Checks if reference I<value1> is a deep copy of reference I<value2> or not.
 The references can be deep structure.  If they are different, the message will
 display the place where they start differing.
+
+=item assert_isa(I<class>, I<value> [, I<message>])
+
+Checks if I<value> is a I<class>.
+
+  assert_isa( 'My::Class', $obj );
 
 =item assert_raises(I<expected>, I<code> [, I<message>])
 

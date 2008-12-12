@@ -1,5 +1,24 @@
 ------------------------------------------------------------------------
-0.01 | Piotr Roszatycki <dexter@debian.org> | 2008-12-05
+0.03 | Piotr Roszatycki <dexter@debian.org> | 2008-12-10
+
+New:
+
+* Test::Assert::DEBUG is true if Test::Assert is used in main package.
+* DEBUG constant can be exported.
+
+  package My::Class;
+  use Test::Assert ':all', 'DEBUG';
+  assert_true( 0 ) if DEBUG;
+
+* New method "assert_isa".
+
+  my $obj = My::Class->new;
+  assert_isa( 'My::Class', $obj );
+
+* Build requires parent.
+
+------------------------------------------------------------------------
+0.02 | Piotr Roszatycki <dexter@debian.org> | 2008-12-05
 
 Changes:
 
