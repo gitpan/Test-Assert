@@ -23,9 +23,9 @@ SYNOPSIS
       # Assertions are compiled only if Test::Assert was used
       # in the main package.
       package My::Package;
-      use Test::Assert 'fail', 'DEBUG';
+      use Test::Assert 'fail', 'ASSERT';
       my $state = do_something();
-      assert_true($state >= 1 && $state <=2) if DEBUG;
+      assert_true($state >= 1 && $state <=2) if ASSERT;
       if ($state == 1) {
           # 1st state
           do_foo();
@@ -35,10 +35,10 @@ SYNOPSIS
       }
       my $a = get_a();
       my $b = get_b();
-      assert_num_not_equals(0, $b) if DEBUG;
+      assert_num_not_equals(0, $b) if ASSERT;
       my $c = $a / $b;
 
-      $ perl -MTest::Assert script.pl  # sets Test::Assert::DEBUG to 1
+      $ perl -MTest::Assert script.pl  # sets Test::Assert::ASSERT to 1
 
 DESCRIPTION
     This class provides a set of assertion methods useful for writing tests.

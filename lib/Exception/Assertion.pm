@@ -34,10 +34,10 @@ use 5.006;
 use strict;
 use warnings;
 
-our $VERSION = 0.03;
+our $VERSION = 0.04;
 
 
-use Exception::Base 0.20 (
+use Exception::Base 0.21 (
     'Exception::Assertion' => {
         has       => 'reason',
         message   => 'Unknown assertion failed',
@@ -98,21 +98,21 @@ descriptions.
 
 =over
 
-=item message (rw, default: 'Unknown assertion failed')
+=item message : Str = "Unknown assertion failed" {rw}
 
 Contains the message of the exception.  This class overrides the default value
 from L<Exception::Base> class.
 
-=item verbosity (rw, default: 3)
+=item verbosity : Int = 3 {rw}
 
 The default verbosity for assertion exception is raised to 3.  This class
 overrides the default value from L<Exception::Base> class.
 
-=item reason (rw)
+=item reason : Str {rw}
 
 Contains the additional message filled by assertion method.
 
-=item string_attributes (default: ['message', 'reason'])
+=item string_attributes : ArrayRef = ['message', 'reason']
 
 Meta-attribute contains the format of string representation of exception
 object.  This class overrides the default value from L<Exception::Base>

@@ -18,4 +18,4 @@ use Test::More tests => 1;
 
 no Test::Assert;
 
-ok( ! Test::Assert::DEBUG );
+ok( ! Test::Assert::ASSERT );

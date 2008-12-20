@@ -1,4 +1,18 @@
 ------------------------------------------------------------------------
+0.04 | Piotr Roszatycki <dexter@debian.org> | 2008-12-20
+
+New:
+
+* New export tag ':assert' exports all "assert_*" functions and "ASSERT"
+  constant.
+
+Changes:
+
+* Test::Assert::ASSERT replaces Test::Assert::DEBUG.
+* Exception::Assert replaces the "ignore_packages" attribute with own value.
+* Requires Exception::Base >= 0.21.
+
+------------------------------------------------------------------------
 0.03 | Piotr Roszatycki <dexter@debian.org> | 2008-12-10
 
 New:

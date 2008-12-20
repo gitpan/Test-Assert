@@ -29,9 +29,9 @@ Test::Assert - Assertion methods for those who like JUnit.
   # Assertions are compiled only if Test::Assert was used
   # in the main package.
   package My::Package;
-  use Test::Assert 'fail', 'DEBUG';
+  use Test::Assert 'fail', 'ASSERT';
   my $state = do_something();
-  assert_true($state >= 1 && $state <=2) if DEBUG;
+  assert_true($state >= 1 && $state <=2) if ASSERT;
   if ($state == 1) {
       # 1st state
       do_foo();
@@ -41,10 +41,10 @@ Test::Assert - Assertion methods for those who like JUnit.
   }
   my $a = get_a();
   my $b = get_b();
-  assert_num_not_equals(0, $b) if DEBUG;
+  assert_num_not_equals(0, $b) if ASSERT;
   my $c = $a / $b;
 
-  $ perl -MTest::Assert script.pl  # sets Test::Assert::DEBUG to 1
+  $ perl -MTest::Assert script.pl  # sets Test::Assert::ASSERT to 1
 
 =head1 DESCRIPTION
 
@@ -69,23 +69,26 @@ use 5.006;
 use strict;
 use warnings;
 
-our $VERSION = 0.03;
+our $VERSION = 0.04;
 
 
 use Exception::Base (
-    '+ignore_class' => [ __PACKAGE__, 'Test::Builder' ],
+    'ignore_class' => [ __PACKAGE__, 'Test::Builder' ],
     'Exception::Assertion',
 );
 
 
 # Debug mode is disabled by default
-use constant DEBUG => 0;
+use constant ASSERT => 0;
 
 
-# Export DEBUG flag, all assert_* methods and fail method
+# Export ASSERT flag, all assert_* methods and fail method
 use Exporter ();
-our @EXPORT_OK = ( 'DEBUG', grep { /^(assert_|fail)/ } keys %{ *Test::Assert:: } );
-our %EXPORT_TAGS = ( all => [ @EXPORT_OK ] );
+our @EXPORT_OK = ( 'ASSERT', grep { /^(assert_|fail)/ } keys %{ *Test::Assert:: } );
+our %EXPORT_TAGS = (
+    all => [ @EXPORT_OK ],
+    assert => [ grep { /^assert/i } @EXPORT_OK ],
+);
 
 
 # Global and local variables required for assert_deep_equal
@@ -94,23 +97,23 @@ our @Data_Stack;
 my $DNE = bless [], 'Does::Not::Exist';
 
 
-# Enable DEBUG mode
+# Enable debug mode
 sub import {
     # Enable only if called from main
     if (caller eq 'main') {
-        undef *DEBUG;
-        *DEBUG = sub () { 1 };
+        undef *ASSERT;
+        *ASSERT = sub () { 1 };
     };
     goto &Exporter::import;
 };
 
 
-# Disable DEBUG mode
+# Disable debug mode
 sub unimport {
     # Disable only if called from main
     if (caller eq 'main') {
-        undef *DEBUG;
-        *DEBUG = sub () { !! '' };
+        undef *ASSERT;
+        *ASSERT = sub () { !! '' };
     };
     return 1;
 };
@@ -127,7 +130,7 @@ sub fail (;$$) {
         reason    => $reason,
     );
 
-    # never occured
+    assert_false("Should never occured") if ASSERT;
     return;
 };
 
@@ -138,7 +141,8 @@ sub assert_true ($;$) {
     my $self = eval { $_[0]->isa(__PACKAGE__) } ? shift : __PACKAGE__;
     my ($boolean, $message) = @_;
 
-    $self->fail($message, 'Boolean assertion failed') unless $boolean;
+    $self->fail($message, "Expected true value, got undef") unless defined $boolean;
+    $self->fail($message, "Expected true value, got '$boolean'") unless $boolean;
     return 1;
 };
 
@@ -149,7 +153,7 @@ sub assert_false ($;$) {
     my $self = eval { $_[0]->isa(__PACKAGE__) } ? shift : __PACKAGE__;
     my ($boolean, $message) = @_;
 
-    $self->fail($message, 'Boolean assertion failed') unless not $boolean;
+    $self->fail($message, "Expected false value, got '$boolean'") unless not $boolean;
     return 1;
 };
 
@@ -595,10 +599,10 @@ __END__
 
 = Class Diagram =
 
-[                              <<utility>>
-                              Test::Assert
- ------------------------------------------------------------------------------
- ------------------------------------------------------------------------------
+[                                 <<utility>>
+                                 Test::Assert
+ ----------------------------------------------------------------------------------
+ ----------------------------------------------------------------------------------
  fail( message : Str = undef, reason : Str = undef )
  assert_true( boolean : Bool, message : Str = undef )
  assert_false( boolean : Bool, message : Str = undef )
@@ -606,10 +610,10 @@ __END__
  assert_not_null( value : Any, message : Str = undef )
  assert_equals( value1 : Defined, value2 : Defined, message : Str = undef )
  assert_not_equals( value1 : Defined, value2 : Defined, message : Str = undef )
- assert_num_equals( value1 : Num, value2 : Num, message : Str = undef )
- assert_num_not_equals( value1 : Num, value2 : Num, message : Str = undef )
- assert_str_equals( value1 : Str, value2 : Str, message : Str = undef )
- assert_str_not_equals( value1 : Str, value2 : Str, message : Str = undef )
+ assert_num_equals( value1 : Defined, value2 : Defined, message : Str = undef )
+ assert_num_not_equals( value1 : Defined, value2 : Defined, message : Str = undef )
+ assert_str_equals( value1 : Defined, value2 : Defined, message : Str = undef )
+ assert_str_not_equals( value1 : Defined, value2 : Defined, message : Str = undef )
  assert_matches( regexp : RegexpRef, value : Str, message : Str = undef )
  assert_not_matches( regexp : RegexpRef, value : Str, message : Str = undef )
  assert_deep_equals( value1 : Ref, value2 : Ref, message : Str = undef )
@@ -617,9 +621,9 @@ __END__
  assert_isa( class : Str, object : Defined, message : Str = undef )
  assert_raises( expected : Any, code : CoreRef, message : Str = undef )
  assert_test( code : CoreRef, message : Str = undef )
- <<constant>> DEBUG() : Bool                                                    ]
+ <<constant>> ASSERT() : Bool                                                        ]
 
-[Test::Assert] ---> [<<exception>> Exception::Assertion]
+[Test::Assert] ---> <<exception>> [Exception::Assertion]
 
 [Exception::Assertion] ---|> [Exception::Base]
 
@@ -646,7 +650,7 @@ By default, the class does not export its symbols.
 Enables debug mode if it is used in C<main> package.
 
   package main;
-  use Test::Assert;    # Test::Assert::DEBUG is set to 1
+  use Test::Assert;    # Test::Assert::ASSERT is set to 1
 
   $ perl -MTest::Assert script.pl    # ditto
 
@@ -656,11 +660,11 @@ Imports some methods.
 
 =item use Test::Assert ':all';
 
-Imports all C<assert_*> methods and C<fail> method.
+Imports all C<assert_*> methods, C<fail> method and C<ASSERT> constant.
 
-=item use Test::Assert 'DEBUG';
+=item use Test::Assert ':assert';
 
-Imports C<DEBUG> constant.
+Imports all C<assert_*> methods and C<ASSERT> constant.
 
 =item no Test::Assert;
 
@@ -672,15 +676,15 @@ Disables debug mode if it is used in C<main> package.
 
 =over
 
-=item DEBUG
+=item ASSERT
 
 This constant is set to true value if C<Test::Assert> module is used from
 C<main> package.  It allows to enable debug mode globally from command line.
 The debug mode is disabled by default.
 
   package My::Test;
-  use Test::Assert ':all', 'DEBUG';
-  assert_true( 0 ) if DEBUG;  # fails only if debug mode is enabled
+  use Test::Assert ':assert';
+  assert_true( 0 ) if ASSERT;  # fails only if debug mode is enabled
 
   $ perl -MTest::Assert script.pl  # enable debug mode
 
@@ -690,72 +694,72 @@ The debug mode is disabled by default.
 
 =over
 
-=item fail([I<message> [, I<reason>]])
+=item fail( I<message> : Str = undef, I<reason> : Str = undef )
 
 Immediate fail the test.  The L<Exception::Assertion> object will have set
 I<message> and I<reason> attribute based on arguments.
 
-=item assert_true(I<boolean> [, I<message>])
+=item assert_true( I<boolean> : Bool, I<message> : Str = undef )
 
 Checks if I<boolean> expression returns true value.
 
-=item assert_false(I<boolean> [, I<message>])
+=item assert_false( I<boolean> : Bool, I<message> : Str = undef )
 
 Checks if I<boolean> expression returns false value.
 
-=item assert_null(I<value> [, I<message>])
+=item assert_null( I<value> : Any, I<message> : Str = undef )
 
-=item assert_not_null(I<value> [, I<message>])
+=item assert_not_null( I<value> : Any, I<message> : Str = undef )
 
 Checks if I<value> is defined or not defined.
 
-=item assert_equals(I<value1>, I<value2> [, I<message>])
+=item assert_equals( I<value1> : Defined, I<value2> : Defined, I<message> : Str = undef )
 
-=item assert_not_equals(I<value1>, I<value2> [, I<message>])
+=item assert_not_equals( I<value1> : Defined, I<value2> : Defined, I<message> : Str = undef )
 
 Checks if I<value1> and I<value2> are equals or not equals.  If I<value1> and
 I<value2> look like numbers then they are compared with '==' operator,
 otherwise the string 'eq' operator is used.
 
-=item assert_num_equals(I<value1>, I<value2> [, I<message>])
+=item assert_num_equals( I<value1> : Defined, I<value2> : Defined, I<message> : Str = undef )
 
-=item assert_num_not_equals(I<value1>, I<value2> [, I<message>])
+=item assert_num_not_equals( I<value1> : Defined, I<value2> : Defined, I<message> : Str = undef )
 
-Force numeric comparition.
+Force numeric comparation.
 
-=item assert_str_equals(I<value1>, I<value2> [, I<message>])
+=item assert_str_equals( I<value1> : Defined, I<value2> : Defined, I<message> : Str = undef )
 
-=item assert_str_not_equals(I<value1>, I<value2> [, I<message>])
+=item assert_str_not_equals( I<value1> : Defined, I<value2> : Defined, I<message> : Str = undef )
 
-Force string comparition.
+Force string comparation.
 
-=item assert_matches(qr/I<pattern>/, I<value> [, I<message>])
+=item assert_matches( I<regexp> : RegexpRef, I<value> : Str, I<message> : Str = undef )
 
-=item assert_not_matches(qr/I<pattern>/, I<value> [, I<message>])
+=item assert_not_matches( I<regexp> : RegexpRef, I<value> : Str, I<message> : Str = undef )
 
 Checks if I<value> matches I<pattern> regexp.
 
-=item assert_deep_equals(I<value1>, I<value2> [, I<message>])
+=item assert_deep_equals( I<value1> : Ref, I<value2> : Ref, I<message> : Str = undef )
 
-=item assert_deep_not_equals(I<value1>, I<value2> [, I<message>])
+=item assert_deep_not_equals( I<value1> : Ref, I<value2> : Ref, I<message> : Str = undef )
 
 Checks if reference I<value1> is a deep copy of reference I<value2> or not.
 The references can be deep structure.  If they are different, the message will
 display the place where they start differing.
 
-=item assert_isa(I<class>, I<value> [, I<message>])
+=item assert_isa( I<class> : Str, I<object> : Defined, I<message> : Str = undef )
 
 Checks if I<value> is a I<class>.
 
   assert_isa( 'My::Class', $obj );
 
-=item assert_raises(I<expected>, I<code> [, I<message>])
+=item assert_raises( I<expected> : Any, I<code> : CoreRef, I<message> : Str = undef )
 
 Runs the I<code> and checks if it raises the I<expected> exception.
 
 If raised exception is an L<Exception::Base> object, the assertion passes if
 the exception B<matches> I<expected> argument (via
-L<Exception::Base>-E<gt>B<matches> method).
+C<L<Exception::Base>-E<gt>matches> method).
 
 If raised exception is not an L<Exception::Base> object, several conditions
 are checked.  If I<expected> argument is a string or array reference, the
@@ -767,7 +771,7 @@ a regexp, the string representation of exception is matched against regexp.
   assert_raises( 'foo', sub { die 'foo' } );
   assert_raises( ['Exception::Base'], sub { Exception::Base->throw } );
 
-=item assert_test(I<code> [, I<message>])
+=item assert_test( I<code> : CoreRef, I<message> : Str = undef )
 
 Wraps L<Test::Builder> based test function and throws L<Exception::Assertion>
 if the test is failed.  The plan test have to be disabled manually.  The

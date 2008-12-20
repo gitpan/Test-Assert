@@ -25,9 +25,9 @@ sub test_assert_true_succeed {
 };
 
 sub test_assert_true_failed {
-    assert_raises( {reason=>'Boolean assertion failed'}, sub { assert_true( undef ) } );
-    assert_raises( {reason=>'Boolean assertion failed'}, sub { assert_true( 0 ) } );
-    assert_raises( {reason=>'Boolean assertion failed'}, sub { assert_true( '' ) } );
+    assert_raises( {reason=>'Expected true value, got undef'}, sub { assert_true( undef ) } );
+    assert_raises( {reason=>"Expected true value, got '0'"}, sub { assert_true( 0 ) } );
+    assert_raises( {reason=>"Expected true value, got ''"}, sub { assert_true( '' ) } );
     assert_raises( {message=>'foo'}, sub { assert_true( undef, 'foo' ) } );
     assert_raises( qr/^(Exception::\w+: )?Not enough arguments/, sub { eval q{ assert_true() }; die $@ } );
     assert_raises( qr/^(Exception::\w+: )?Too many arguments/, sub { eval q{ assert_true( 1, 2, 3 ) }; die $@ } );
@@ -43,8 +43,8 @@ sub test_assert_false_succeed {
 };
 
 sub test_assert_false_failed {
-    assert_raises( {reason=>'Boolean assertion failed'}, sub { assert_false( 1 ) } );
-    assert_raises( {reason=>'Boolean assertion failed'}, sub { assert_false( 'string' ) } );
+    assert_raises( {reason=>"Expected false value, got '1'"}, sub { assert_false( 1 ) } );
+    assert_raises( {reason=>"Expected false value, got 'string'"}, sub { assert_false( 'string' ) } );
     assert_raises( {message=>'foo'}, sub { assert_false( 1, 'foo' ) } );
     assert_raises( qr/^(Exception::\w+: )?Not enough arguments/, sub { eval q{ assert_false() }; die $@ } );
     assert_raises( qr/^(Exception::\w+: )?Too many arguments/, sub { eval q{ assert_false( 1, 2, 3 ) }; die $@ } );
