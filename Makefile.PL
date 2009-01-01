@@ -9,7 +9,8 @@ WriteMakefile
                            'Exception::Base' => '0.21',
                            'Exception::Died' => '0.03',
                            'Exception::Warning' => '0.02',
-                           'Test::Unit::Lite' => '0.1',
+                           'Test::Unit::Lite' => '0.11',
+                           'constant::boolean' => 0,
                            'parent' => 0
                          },
           'INSTALLDIRS' => 'site',

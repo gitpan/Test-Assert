@@ -69,7 +69,7 @@ use 5.006;
 use strict;
 use warnings;
 
-our $VERSION = 0.04;
+our $VERSION = 0.05;
 
 
 use Exception::Base (
@@ -78,8 +78,12 @@ use Exception::Base (
 );
 
 
+# TRUE and FALSE
+use constant::boolean;
+
+
 # Debug mode is disabled by default
-use constant ASSERT => 0;
+use constant ASSERT => FALSE;
 
 
 # Export ASSERT flag, all assert_* methods and fail method
@@ -102,7 +106,7 @@ sub import {
     # Enable only if called from main
     if (caller eq 'main') {
         undef *ASSERT;
-        *ASSERT = sub () { 1 };
+        *ASSERT = sub () { TRUE; };
     };
     goto &Exporter::import;
 };
@@ -113,16 +117,16 @@ sub unimport {
     # Disable only if called from main
     if (caller eq 'main') {
         undef *ASSERT;
-        *ASSERT = sub () { !! '' };
+        *ASSERT = sub () { FALSE; };
     };
-    return 1;
+    return TRUE;
 };
 
 
 # Fails a test with the given name.
 sub fail (;$$) {
     # check if called as function
-    my $self = eval { $_[0]->isa(__PACKAGE__) } ? shift : __PACKAGE__;
+    my $self = __isa($_[0], __PACKAGE__) ? shift : __PACKAGE__;
     my ($message, $reason) = @_;
 
     Exception::Assertion->throw(
@@ -131,62 +135,62 @@ sub fail (;$$) {
     );
 
     assert_false("Should never occured") if ASSERT;
-    return;
+    return FALSE;
 };
 
 
 # Asserts that a condition is true.
 sub assert_true ($;$) {
     # check if called as function
-    my $self = eval { $_[0]->isa(__PACKAGE__) } ? shift : __PACKAGE__;
+    my $self = __isa($_[0], __PACKAGE__) ? shift : __PACKAGE__;
     my ($boolean, $message) = @_;
 
     $self->fail($message, "Expected true value, got undef") unless defined $boolean;
     $self->fail($message, "Expected true value, got '$boolean'") unless $boolean;
-    return 1;
+    return TRUE;
 };
 
 
 # Asserts that a condition is false.
 sub assert_false ($;$) {
     # check if called as function
-    my $self = eval { $_[0]->isa(__PACKAGE__) } ? shift : __PACKAGE__;
+    my $self = __isa($_[0], __PACKAGE__) ? shift : __PACKAGE__;
     my ($boolean, $message) = @_;
 
     $self->fail($message, "Expected false value, got '$boolean'") unless not $boolean;
-    return 1;
+    return TRUE;
 };
 
 
 # Asserts that a value is null.
 sub assert_null ($;$) {
     # check if called as function
-    my $self = eval { $_[0]->isa(__PACKAGE__) } ? shift : __PACKAGE__;
+    my $self = __isa($_[0], __PACKAGE__) ? shift : __PACKAGE__;
     my ($value, $message) = @_;
 
     $self->fail($message, "'$value' is defined") unless not defined $value;
-    return 1;
+    return TRUE;
 };
 
 
 # Asserts that a value is not null.
 sub assert_not_null ($;$) {
     # check if called as function
-    my $self = eval { $_[0]->isa(__PACKAGE__) } ? shift : __PACKAGE__;
+    my $self = __isa($_[0], __PACKAGE__) ? shift : __PACKAGE__;
     my ($value, $message) = @_;
 
     $self->fail($message, 'undef unexpected') unless defined $value;
-    return 1;
+    return TRUE;
 };
 
 
 # Assert that two values are equal
 sub assert_equals ($$;$) {
     # check if called as function
-    my $self = eval { $_[0]->isa(__PACKAGE__) } ? shift : __PACKAGE__;
+    my $self = __isa($_[0], __PACKAGE__) ? shift : __PACKAGE__;
     my ($value1, $value2, $message) = @_;
 
-    return 1 if (not defined $value1 and not defined $value2);
+    return TRUE if (not defined $value1 and not defined $value2);
     $self->fail(
         $message, 'Expected value was undef; should be using assert_null?'
     ) unless defined $value1;
@@ -200,20 +204,20 @@ sub assert_equals ($$;$) {
     else {
         $self->fail($message, "Expected '$value1', got '$value2'") unless $value1 eq $value2;
     };
-    return 1;
+    return TRUE;
 };
 
 
 # Assert that two values are not equal
 sub assert_not_equals ($$;$) {
     # check if called as function
-    my $self = eval { $_[0]->isa(__PACKAGE__) } ? shift : __PACKAGE__;
+    my $self = __isa($_[0], __PACKAGE__) ? shift : __PACKAGE__;
     my ($value1, $value2, $message) = @_;
 
     if (not defined $value1 and not defined $value2) {
         $self->fail($message, 'Both values were undefined');
     };
-    return 1 if (not defined $value1 xor not defined $value2);
+    return TRUE if (not defined $value1 xor not defined $value2);
     if ($value1 =~ /^[+-]?(\d+\.\d+|\d+\.|\.\d+|\d+)([eE][+-]?\d+)?$/ and
            $value2 =~ /^[+-]?(\d+\.\d+|\d+\.|\.\d+|\d+)([eE][+-]?\d+)?$/)
     {
@@ -223,76 +227,76 @@ sub assert_not_equals ($$;$) {
     else {
         $self->fail($message, "'$value1' and '$value2' should differ") unless $value1 ne $value2;
     };
-    return 1;
+    return TRUE;
 };
 
 
 # Assert that two values are numerically equal
 sub assert_num_equals ($$;$) {
     # check if called as function
-    my $self = eval { $_[0]->isa(__PACKAGE__) } ? shift : __PACKAGE__;
+    my $self = __isa($_[0], __PACKAGE__) ? shift : __PACKAGE__;
 
     my ($value1, $value2, $message) = @_;
-    return 1 if (not defined $value1 and not defined $value2);
+    return TRUE if (not defined $value1 and not defined $value2);
     no warnings 'numeric';
     $self->fail($message, 'Expected undef, got ' . (0+$value2)) if not defined $value1;
     $self->fail($message, 'Expected ' . (0+$value1) . ', got undef') if not defined $value2;
     $self->fail($message, 'Expected ' . (0+$value1) . ', got ' . (0+$value2)) unless $value1 == $value2;
-    return 1;
+    return TRUE;
 };
 
 
 # Assert that two values are numerically not equal
 sub assert_num_not_equals ($$;$) {
     # check if called as function
-    my $self = eval { $_[0]->isa(__PACKAGE__) } ? shift : __PACKAGE__;
+    my $self = __isa($_[0], __PACKAGE__) ? shift : __PACKAGE__;
 
     my ($value1, $value2, $message) = @_;
     if (not defined $value1 and not defined $value2) {
         $self->fail($message, 'Both values were undefined');
     };
-    return 1 if (not defined $value1 xor not defined $value2);
+    return TRUE if (not defined $value1 xor not defined $value2);
     no warnings 'numeric';
     $self->fail($message, (0+$value1) . ' and ' . (0+$value2) . ' should differ') unless $value1 != $value2;
-    return 1;
+    return TRUE;
 };
 
 
 # Assert that two strings are equal
 sub assert_str_equals ($$;$) {
     # check if called as function
-    my $self = eval { $_[0]->isa(__PACKAGE__) } ? shift : __PACKAGE__;
+    my $self = __isa($_[0], __PACKAGE__) ? shift : __PACKAGE__;
 
     my ($value1, $value2, $message) = @_;
-    return 1 if (not defined $value1 and not defined $value2);
+    return TRUE if (not defined $value1 and not defined $value2);
     $self->fail(
         $message, 'Expected value was undef; should be using assert_null?'
     ) unless defined $value1;
     $self->fail($message, "Expected '$value1', got undef") unless defined $value2;
     $self->fail($message, "Expected '$value1', got '$value2'") unless "$value1" eq "$value2";
-    return 1;
+    return TRUE;
 };
 
 
 # Assert that two strings are not equal
 sub assert_str_not_equals ($$;$) {
     # check if called as function
-    my $self = eval { $_[0]->isa(__PACKAGE__) } ? shift : __PACKAGE__;
+    my $self = __isa($_[0], __PACKAGE__) ? shift : __PACKAGE__;
 
     my ($value1, $value2, $message) = @_;
     if (not defined $value1 and not defined $value2) {
         $self->fail($message, 'Both values were undefined');
     };
-    return 1 if (not defined $value1 xor not defined $value2);
+    return TRUE if (not defined $value1 xor not defined $value2);
     $self->fail($message, "'$value1' and '$value2' should differ") unless "$value1" ne "$value2";
-    return 1;
+    return TRUE;
 };
 
 
 # Assert that string matches regexp
 sub assert_matches ($$;$) {
     # check if called as function
-    my $self = eval { $_[0]->isa(__PACKAGE__) } ? shift : __PACKAGE__;
+    my $self = __isa($_[0], __PACKAGE__) ? shift : __PACKAGE__;
 
     my ($regexp, $value, $message) = @_;
     $self->fail(
@@ -303,32 +307,32 @@ sub assert_matches ($$;$) {
     ) unless ref $regexp eq 'Regexp';
     $self->fail($message, "Expected /$regexp/, got undef") unless defined $value;
     $self->fail($message, "'$value' didn't match /$regexp/") unless $value =~ $regexp;
-    return 1;
+    return TRUE;
 };
 
 
 # Assert that string matches regexp
 sub assert_not_matches ($$;$) {
     # check if called as function
-    my $self = eval { $_[0]->isa(__PACKAGE__) } ? shift : __PACKAGE__;
+    my $self = __isa($_[0], __PACKAGE__) ? shift : __PACKAGE__;
 
     my ($regexp, $value, $message) = @_;
     $self->fail(
         $message, 'Expected value was undef; should be using assert_null?'
     ) unless defined $regexp;
-    return 1 if not defined $value;
+    return TRUE if not defined $value;
     $self->fail(
         $message, 'Argument 1 to assert_not_matches() must be a regexp'
     ) unless ref $regexp eq 'Regexp';
     $self->fail($message, "'$value' matched /$regexp/") unless $value !~ $regexp;
-    return 1;
+    return TRUE;
 };
 
 
 # Assert that data structures are deeply equal
 sub assert_deep_equals ($$;$) {
     # check if called as function
-    my $self = eval { $_[0]->isa(__PACKAGE__) } ? shift : __PACKAGE__;
+    my $self = __isa($_[0], __PACKAGE__) ? shift : __PACKAGE__;
 
     my ($value1, $value2, $message) = @_;
     $self->fail($message, 'Both arguments were not references') unless ref $value1 or ref $value2;
@@ -339,14 +343,14 @@ sub assert_deep_equals ($$;$) {
     $self->fail(
         $message, $self->_format_stack(@Data_Stack)
     ) unless $self->_deep_check($value1, $value2);
-    return 1;
+    return TRUE;
 };
 
 
 # Assert that data structures are deeply equal
 sub assert_deep_not_equals ($$;$) {
     # check if called as function
-    my $self = eval { $_[0]->isa(__PACKAGE__) } ? shift : __PACKAGE__;
+    my $self = __isa($_[0], __PACKAGE__) ? shift : __PACKAGE__;
 
     my ($value1, $value2, $message) = @_;
     $self->fail($message, 'Both arguments were not references') unless ref $value1 or ref $value2;
@@ -357,14 +361,14 @@ sub assert_deep_not_equals ($$;$) {
     $self->fail(
         $message, 'Both structures should differ'
     ) unless not $self->_deep_check($value1, $value2);
-    return 1;
+    return TRUE;
 };
 
 
-# Assert that code throws an exception
+# Assert that object is a class
 sub assert_isa ($$;$) {
     # check if called as function
-    my $self = eval { $_[0]->isa(__PACKAGE__) } ? shift : __PACKAGE__;
+    my $self = __isa($_[0], __PACKAGE__) ? shift : __PACKAGE__;
 
     my ($class, $value, $message) = @_;
 
@@ -372,18 +376,35 @@ sub assert_isa ($$;$) {
         $message, 'Class name was undef; should be using assert_null?'
     ) unless defined $class;
     $self->fail($message, "Expected '$class' object or class, got undef") unless defined $value;
-    if (not eval { $value->isa($class) } ) {
+    if (not __isa($value, $class)) {
         $self->fail($message, "Expected '$class' object or class, got '" . ref($value) . "' reference") if ref $value;
         $self->fail($message, "Expected '$class' object or class, got '$value' value");
     };
-    return 1;
+    return TRUE;
+};
+
+
+# Assert that object is not a class
+sub assert_not_isa ($$;$) {
+    # check if called as function
+    my $self = __isa($_[0], __PACKAGE__) ? shift : __PACKAGE__;
+
+    my ($class, $value, $message) = @_;
+
+    $self->fail(
+        $message, 'Class name was undef; should be using assert_null?'
+    ) unless defined $class;
+    if (__isa($value, $class)) {
+        $self->fail($message, "'$value' is a '$class' object or class");
+    };
+    return TRUE;
 };
 
 
 # Assert that code throws an exception
 sub assert_raises ($&;$) {
     # check if called as function
-    my $self = eval { $_[0]->isa(__PACKAGE__) } ? shift : __PACKAGE__;
+    my $self = __isa($_[0], __PACKAGE__) ? shift : __PACKAGE__;
 
     my ($expected, $code, $message) = @_;
 
@@ -392,21 +413,21 @@ sub assert_raises ($&;$) {
     };
     if ($@) {
         my $e = $@;
-        if (ref $e and eval { $e->isa('Exception::Base') } ) {
-            return 1 if $e->matches($expected);
+        if (ref $e and __isa($e, 'Exception::Base')) {
+            return TRUE if $e->matches($expected);
         }
         else {
             if (ref $expected eq 'Regexp') {
-                return 1 if "$e" =~ $expected;
+                return TRUE if "$e" =~ $expected;
             }
             elsif (ref $expected eq 'ARRAY') {
-                return 1 if grep { eval { $e->isa($_) } } @{ $expected };
+                return TRUE if grep { __isa($e, $_) } @{ $expected };
             }
             elsif (not ref $expected) {
                 my $message = "$e";
                 while ($message =~ s/\t\.\.\.propagated at (?!.*\bat\b.*).* line \d+( thread \d+)?\.\n$//s) { }
                 $message =~ s/( at (?!.*\bat\b.*).* line \d+( thread \d+)?\.)?\n$//s;
-                return 1 if $message eq $expected;
+                return TRUE if $message eq $expected;
             };
         };
         # Rethrow an exception
@@ -417,20 +438,20 @@ sub assert_raises ($&;$) {
             $message, 'Expected exception was not raised'
         );
     };
-    return 1;
+    return TRUE;
 };
 
 
 # Assert that Test::Builder method is ok
 sub assert_test (&;$) {
     # check if called as function
-    my $self = eval { $_[0]->isa(__PACKAGE__) } ? shift : __PACKAGE__;
+    my $self = __isa($_[0], __PACKAGE__) ? shift : __PACKAGE__;
 
     my ($code, $message) = @_;
 
     my $diag_message = '';
     my $ok_message = '';
-    my $ok_return = 1;
+    my $ok_return = TRUE;
 
     no warnings 'redefine';
     local *Test::Builder::diag = sub {
@@ -454,7 +475,7 @@ sub assert_test (&;$) {
             $new_message, 'assert_test failed'
         ) unless $ok_return;
     };
-    return 1;
+    return TRUE;
 };
 
 
@@ -463,15 +484,15 @@ sub _deep_check {
     my ($self, $e1, $e2) = @_;
 
     if ( ! defined $e1 || ! defined $e2 ) {
-        return 1 if !defined $e1 && !defined $e2;
+        return TRUE if !defined $e1 && !defined $e2;
         push @Data_Stack, { vals => [$e1, $e2] };
-        return '';
+        return FALSE;
     };
 
-    return 1 if $e1 eq $e2;
+    return TRUE if $e1 eq $e2;
     if ( ref $e1 && ref $e2 ) {
         my $e2_ref = "$e2";
-        return 1 if defined $Seen_Refs{$e1} && $Seen_Refs{$e1} eq $e2_ref;
+        return TRUE if defined $Seen_Refs{$e1} && $Seen_Refs{$e1} eq $e2_ref;
         $Seen_Refs{$e1} = $e2_ref;
     };
 
@@ -494,16 +515,16 @@ sub _deep_check {
     else {
         push @Data_Stack, { vals => [$e1, $e2] };
     };
-    return '';
+    return FALSE;
 };
 
 
 # Checks if arrays are equal
 sub _eq_array  {
     my ($self, $a1, $a2) = @_;
-    return 1 if $a1 eq $a2;
+    return TRUE if $a1 eq $a2;
 
-    my $ok = 1;
+    my $ok = TRUE;
     my $max = $#$a1 > $#$a2 ? $#$a1 : $#$a2;
     for (0..$max) {
         my $e1 = $_ > $#$a1 ? $DNE : $a1->[$_];
@@ -522,9 +543,9 @@ sub _eq_array  {
 # Checks if hashes are equal
 sub _eq_hash {
     my ($self, $a1, $a2) = @_;
-    return 1 if $a1 eq $a2;
+    return TRUE if $a1 eq $a2;
 
-    my $ok = 1;
+    my $ok = TRUE;
     my $bigger = keys %$a1 > keys %$a2 ? $a1 : $a2;
     foreach my $k (keys %$bigger) {
         my $e1 = exists $a1->{$k} ? $a1->{$k} : $DNE;
@@ -584,6 +605,15 @@ sub _format_stack {
 };
 
 
+# Better, safe "isa" function
+sub __isa {
+    my ($object, $class) = @_;
+    local $@ = '';
+    local $SIG{__DIE__} = '';
+    return eval { $object->isa($class) };
+};
+
+
 1;
 
 
@@ -619,6 +649,7 @@ __END__
  assert_deep_equals( value1 : Ref, value2 : Ref, message : Str = undef )
  assert_deep_not_equals( value1 : Ref, value2 : Ref, message : Str = undef )
  assert_isa( class : Str, object : Defined, message : Str = undef )
+ assert_not_isa( class : Str, object : Defined, message : Str = undef )
  assert_raises( expected : Any, code : CoreRef, message : Str = undef )
  assert_test( code : CoreRef, message : Str = undef )
  <<constant>> ASSERT() : Bool                                                        ]
@@ -650,7 +681,7 @@ By default, the class does not export its symbols.
 Enables debug mode if it is used in C<main> package.
 
   package main;
-  use Test::Assert;    # Test::Assert::ASSERT is set to 1
+  use Test::Assert;    # Test::Assert::ASSERT is set to TRUE
 
   $ perl -MTest::Assert script.pl    # ditto
 
@@ -749,7 +780,9 @@ display the place where they start differing.
 
 =item assert_isa( I<class> : Str, I<object> : Defined, I<message> : Str = undef )
 
-Checks if I<value> is a I<class>.
+=item assert_not_isa( I<class> : Str, I<object> : Defined, I<message> : Str = undef )
+
+Checks if I<value> is a I<class> or not.
 
   assert_isa( 'My::Class', $obj );
 
@@ -758,7 +791,7 @@ Checks if I<value> is a I<class>.
 Runs the I<code> and checks if it raises the I<expected> exception.
 
 If raised exception is an L<Exception::Base> object, the assertion passes if
-the exception B<matches> I<expected> argument (via
+the exception C<matches> I<expected> argument (via
 C<L<Exception::Base>-E<gt>matches> method).
 
 If raised exception is not an L<Exception::Base> object, several conditions
@@ -775,8 +808,8 @@ a regexp, the string representation of exception is matched against regexp.
 
 Wraps L<Test::Builder> based test function and throws L<Exception::Assertion>
 if the test is failed.  The plan test have to be disabled manually.  The
-L<Test::More> module imports the B<fail> method by default which conflicts
-with B<Test::Assert> B<fail> method.
+L<Test::More> module imports the C<fail> method by default which conflicts
+with C<Test::Assert> C<fail> method.
 
   use Test::Assert ':all';
   use Test::More ignore => [ '!fail' ];
@@ -804,7 +837,7 @@ Piotr Roszatycki E<lt>dexter@debian.orgE<gt>
 
 =head1 COPYRIGHT
 
-Copyright (C) 2008 by Piotr Roszatycki E<lt>dexter@debian.orgE<gt>.
+Copyright (C) 2008, 2009 by Piotr Roszatycki E<lt>dexter@debian.orgE<gt>.
 
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.

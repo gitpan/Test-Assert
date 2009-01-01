@@ -484,6 +484,24 @@ sub test_assert_isa_failed {
     assert_raises( qr/^(Exception::\w+: )?Too many arguments/, sub { eval q{ assert_isa( 1, 2, 3, 4 ) }; die $@ } );
 };
 
+sub test_assert_not_isa_succeed {
+    my $self = shift;
+    $self->assert_not_isa( 'X', $self );
+    assert_not_isa( 'X', undef );
+    assert_not_isa( 'X', 'Y' );
+    assert_not_isa( 'X', $self );
+};
+
+sub test_assert_not_isa_failed {
+    my $self = shift;
+    assert_raises( {reason=>qr/Class name was undef/}, sub { assert_not_isa( undef, undef ) } );
+    assert_raises( {reason=>qr/is a 'Test::Unit::TestCase' object or class/}, sub { assert_not_isa( 'Test::Unit::TestCase', 'Test::Unit::TestCase' ) } );
+    assert_raises( {reason=>qr/is a 'Test::Unit::TestCase' object or class/}, sub { assert_not_isa( 'Test::Unit::TestCase', $self ) } );
+    assert_raises( qr/^(Exception::\w+: )?Not enough arguments/, sub { eval q{ assert_not_isa() }; die $@ } );
+    assert_raises( qr/^(Exception::\w+: )?Not enough arguments/, sub { eval q{ assert_not_isa( 1 ) }; die $@ } );
+    assert_raises( qr/^(Exception::\w+: )?Too many arguments/, sub { eval q{ assert_not_isa( 1, 2, 3, 4 ) }; die $@ } );
+};
+
 sub test_assert_raises_succeed {
     my $self = shift;
     $self->assert_raises( qr/^(Exception::\w+: )?string/, sub { die 'string' } );

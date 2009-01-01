@@ -12,6 +12,7 @@ my $build = Module::Build->new(
     license => 'perl',
     requires => {
         'perl'                    => 5.006,
+        'constant::boolean'       => 0,
         'Exception::Base'         => 0.21,
     },
     optional => {
@@ -19,7 +20,7 @@ my $build = Module::Build->new(
     build_requires => {
         'Exception::Died'         => 0.03,
         'Exception::Warning'      => 0.02,
-        'Test::Unit::Lite'        => 0.10,
+        'Test::Unit::Lite'        => 0.11,
 	'parent'                  => 0,
     },
     create_makefile_pl => 'traditional',

@@ -1,4 +1,17 @@
 ------------------------------------------------------------------------
+0.05 | Piotr Roszatycki <dexter@debian.org> | 2009-01-01
+
+New:
+
+* New methods "assert_not_isa".
+
+Changes:
+
+* Safe "isa" method is used with eval which doesn't fail if $SIG{__DIE__} is
+  changed.
+* Requires constant::boolean.
+
+------------------------------------------------------------------------
 0.04 | Piotr Roszatycki <dexter@debian.org> | 2008-12-20
 
 New:

@@ -65,9 +65,9 @@ sub check_file {
     # if I attempt to modify the line.  So, disable the violation.  *sigh*
     ## no critic (ProhibitEscapedMetacharacters)
     my @copyright_years = $content =~ m<
-                                       (?: copyright | \(c\) )
+                                       (?: copyright(?:\s\(c\))? | \(c\) )
                                        \s*
-                                       (?: \d{4} \\? - )?
+                                       (?: \d{4} \\? [-,]\s*)?
                                        (\d{4})
                                        >gixms;
     if (0 < grep {$_ ne $this_year} @copyright_years) {
