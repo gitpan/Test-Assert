@@ -18,10 +18,8 @@ my $build = Module::Build->new(
     optional => {
     },
     build_requires => {
-        'Exception::Died'         => 0.03,
-        'Exception::Warning'      => 0.02,
         'Test::Unit::Lite'        => 0.11,
-	'parent'                  => 0,
+        'parent'                  => 0,
     },
     create_makefile_pl => 'traditional',
     create_readme => 1,

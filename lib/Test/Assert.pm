@@ -64,12 +64,11 @@ The assertions can be also used for run-time checking.
 
 =cut
 
-
 use 5.006;
 use strict;
 use warnings;
 
-our $VERSION = 0.05;
+our $VERSION = 0.05_01;
 
 
 use Exception::Base (
@@ -83,6 +82,7 @@ use constant::boolean;
 
 
 # Debug mode is disabled by default
+## no critic (ProhibitConstantPragma)
 use constant ASSERT => FALSE;
 
 
@@ -96,6 +96,7 @@ our %EXPORT_TAGS = (
 
 
 # Global and local variables required for assert_deep_equal
+## no critic (ProhibitPackageVars)
 our %Seen_Refs = ();
 our @Data_Stack;
 my $DNE = bless [], 'Does::Not::Exist';
@@ -122,6 +123,11 @@ sub unimport {
     return TRUE;
 };
 
+
+## no critic (ProhibitNegativeExpressionsInUnlessAndUntilConditions)
+## no critic (ProhibitSubroutinePrototypes)
+## no critic (RequireArgUnpacking)
+## no critic (RequireCheckingReturnValueOfEval)
 
 # Fails a test with the given name.
 sub fail (;$$) {
@@ -431,6 +437,7 @@ sub assert_raises ($&;$) {
             };
         };
         # Rethrow an exception
+        ## no critic (RequireCarping)
         die $e;
     }
     else {

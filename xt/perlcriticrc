@@ -1,7 +1,6 @@
 # local defaults for perlcritic
 severity = 3
 verbose = 4
-exclude = ProhibitConstantPragma ProhibitNegativeExpressionsInUnlessAndUntilConditions ProhibitOneArgSelect ProhibitPackageVars ProhibitSubroutinePrototypes RequireArgUnpacking RequireCarping RequireCheckingReturnValueOfEval
 
 [ControlStructures::ProhibitCascadingIfElse]
 max_elsif = 5

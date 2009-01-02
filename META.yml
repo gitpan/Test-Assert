@@ -1,6 +1,6 @@
 ---
 name: Test-Assert
-version: 0.05
+version: 0.0501
 author:
   - 'Piotr Roszatycki <dexter@debian.org>'
 abstract: Assertion methods for those who like JUnit.
@@ -12,17 +12,15 @@ requires:
   constant::boolean: 0
   perl: 5.006
 build_requires:
-  Exception::Died: 0.03
-  Exception::Warning: 0.02
   Test::Unit::Lite: 0.11
   parent: 0
 provides:
   Exception::Assertion:
     file: lib/Exception/Assertion.pm
-    version: 0.05
+    version: 0.0501
   Test::Assert:
     file: lib/Test/Assert.pm
-    version: 0.05
+    version: 0.0501
 generated_by: Module::Build version 0.280801
 meta-spec:
   url: http://module-build.sourceforge.net/META-spec-v1.2.html
