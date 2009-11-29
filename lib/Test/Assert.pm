@@ -8,28 +8,26 @@ Test::Assert - Assertion methods for those who like JUnit.
 
 =head1 SYNOPSIS
 
-  # Use as base class
-  package My::TestMethod;
-  use base 'Test::Assert';
-  sub test_method {
-    my $self = shift;
-    $self->assert_true(1, "pass");
-    $self->assert_true(0, "fail");
-  }
-
   # Use as imported methods
+  #
   package My::Test;
+
   use Test::Assert ':all';
+
   assert_true(1, "pass");
   assert_true(0, "fail");
+
   use Test::More;
   assert_test(sub { require_ok($module) });
 
   # Use for debugging purposes
   # Assertions are compiled only if Test::Assert was used
-  # in the main package.
+  # from the main package.
+  #
   package My::Package;
-  use Test::Assert 'fail', 'ASSERT';
+
+  use Test::Assert ':assert';
+
   my $state = do_something();
   assert_true($state >= 1 && $state <=2) if ASSERT;
   if ($state == 1) {
@@ -39,23 +37,31 @@ Test::Assert - Assertion methods for those who like JUnit.
       # 2nd and last state
       do_bar();
   }
+
   my $a = get_a();
   my $b = get_b();
   assert_num_not_equals(0, $b) if ASSERT;
   my $c = $a / $b;
 
+  # Clean the namespace
+  no Test::Assert;
+
+  # From command line
   $ perl -MTest::Assert script.pl  # sets Test::Assert::ASSERT to 1
 
 =head1 DESCRIPTION
 
 This class provides a set of assertion methods useful for writing tests.  The
-API is based on JUnit4 and L<Test::Unit> and the methods die on failure.
+API is based on JUnit4 and L<Test::Unit::Lite> and the methods die on failure.
+
+These assertion methods might be not useful for common L<Test::Builder>-based
+(L<Test::Simple>, L<Test::More>, etc.) test units.
 
 The assertion methods can be used in class which is derived from
-B<Test::Assert> or used as standard Perl functions after importing them into
+C<Test::Assert> or used as standard Perl functions after importing them into
 user's namespace.
 
-B<Test::Assert> can also wrap standard L<Test::Simple>, L<Test::More> or other
+C<Test::Assert> can also wrap standard L<Test::Simple>, L<Test::More> or other
 L<Test::Builder>-based tests.
 
 The assertions can be also used for run-time checking.
@@ -65,10 +71,11 @@ The assertions can be also used for run-time checking.
 =cut
 
 use 5.006;
+
 use strict;
 use warnings;
 
-our $VERSION = 0.05_01;
+our $VERSION = '0.0503';
 
 
 use Exception::Base (
@@ -87,40 +94,49 @@ use constant ASSERT => FALSE;
 
 
 # Export ASSERT flag, all assert_* methods and fail method
-use Exporter ();
-our @EXPORT_OK = ( 'ASSERT', grep { /^(assert_|fail)/ } keys %{ *Test::Assert:: } );
-our %EXPORT_TAGS = (
-    all => [ @EXPORT_OK ],
-    assert => [ grep { /^assert/i } @EXPORT_OK ],
-);
+use Symbol::Util qw( export_package unexport_package stash );
 
 
-# Global and local variables required for assert_deep_equal
-## no critic (ProhibitPackageVars)
-our %Seen_Refs = ();
-our @Data_Stack;
-my $DNE = bless [], 'Does::Not::Exist';
+# Variable required for assert_deep_equal
+my $DNE = bless [], 'Test::Assert::Does::Not::Exist';
 
 
 # Enable debug mode
 sub import {
+    my ($package, @names) = @_;
+    my $caller = caller();
+
     # Enable only if called from main
-    if (caller eq 'main') {
+    if ($caller eq 'main') {
         undef *ASSERT;
         *ASSERT = sub () { TRUE; };
     };
-    goto &Exporter::import;
+
+    my @export_ok = ( 'ASSERT', grep { /^(assert_|fail)/ } keys %{ stash(__PACKAGE__) } );
+    my %export_tags = (
+        all => [ @export_ok ],
+        assert => [ grep { /^assert_/i } @export_ok ],
+    );
+
+    return export_package($caller, $package, {
+        OK   => \@export_ok,
+        TAGS => \%export_tags,
+    }, @names);
 };
 
 
 # Disable debug mode
 sub unimport {
+    my ($package, @names) = @_;
+    my $caller = caller();
+
     # Disable only if called from main
-    if (caller eq 'main') {
+    if ($caller eq 'main') {
         undef *ASSERT;
         *ASSERT = sub () { FALSE; };
     };
-    return TRUE;
+
+    return unexport_package($caller, $package);
 };
 
 
@@ -342,13 +358,16 @@ sub assert_deep_equals ($$;$) {
 
     my ($value1, $value2, $message) = @_;
     $self->fail($message, 'Both arguments were not references') unless ref $value1 or ref $value2;
-    $self->fail($message, 'Argument 1 to assert_deep_equals() must be a regexp') unless ref $value1;
-    $self->fail($message, 'Argument 2 to assert_deep_equals() must be a regexp') unless ref $value2;
-    local @Data_Stack = ();
-    local %Seen_Refs = ();
+    $self->fail($message, 'Argument 1 to assert_deep_equals() must be a reference') unless ref $value1;
+    $self->fail($message, 'Argument 2 to assert_deep_equals() must be a reference') unless ref $value2;
+
+    my $data_stack = [];
+    my $seen_refs = {};
+
     $self->fail(
-        $message, $self->_format_stack(@Data_Stack)
-    ) unless $self->_deep_check($value1, $value2);
+        $message, $self->_format_stack($data_stack)
+    ) unless $self->_deep_check($value1, $value2, $data_stack, $seen_refs);
+
     return TRUE;
 };
 
@@ -360,13 +379,16 @@ sub assert_deep_not_equals ($$;$) {
 
     my ($value1, $value2, $message) = @_;
     $self->fail($message, 'Both arguments were not references') unless ref $value1 or ref $value2;
-    $self->fail($message, 'Argument 1 to assert_deep_equals() must be a regexp') unless ref $value1;
-    $self->fail($message, 'Argument 2 to assert_deep_equals() must be a regexp') unless ref $value2;
-    local @Data_Stack = ();
-    local %Seen_Refs = ();
+    $self->fail($message, 'Argument 1 to assert_deep_equals() must be a reference') unless ref $value1;
+    $self->fail($message, 'Argument 2 to assert_deep_equals() must be a reference') unless ref $value2;
+
+    my $data_stack = [];
+    my $seen_refs = {};
+
     $self->fail(
         $message, 'Both structures should differ'
-    ) unless not $self->_deep_check($value1, $value2);
+    ) unless not $self->_deep_check($value1, $value2, $data_stack, $seen_refs);
+
     return TRUE;
 };
 
@@ -430,10 +452,10 @@ sub assert_raises ($&;$) {
                 return TRUE if grep { __isa($e, $_) } @{ $expected };
             }
             elsif (not ref $expected) {
-                my $message = "$e";
-                while ($message =~ s/\t\.\.\.propagated at (?!.*\bat\b.*).* line \d+( thread \d+)?\.\n$//s) { }
-                $message =~ s/( at (?!.*\bat\b.*).* line \d+( thread \d+)?\.)?\n$//s;
-                return TRUE if $message eq $expected;
+                my $caught_message = "$e";
+                while ($caught_message =~ s/\t\.\.\.propagated at (?!.*\bat\b.*).* line \d+( thread \d+)?\.\n$//s) { }
+                $caught_message =~ s/( at (?!.*\bat\b.*).* line \d+( thread \d+)?\.)?\n$//s;
+                return TRUE if $caught_message eq $expected;
             };
         };
         # Rethrow an exception
@@ -460,7 +482,7 @@ sub assert_test (&;$) {
     my $ok_message = '';
     my $ok_return = TRUE;
 
-    no warnings 'redefine';
+    no warnings 'once', 'redefine';
     local *Test::Builder::diag = sub {
         $diag_message .= $_[1] if defined $_[1];
     };
@@ -488,68 +510,74 @@ sub assert_test (&;$) {
 
 # Checks if deep structures are equal
 sub _deep_check {
-    my ($self, $e1, $e2) = @_;
+    my ($self, $e1, $e2, $data_stack, $seen_refs) = @_;
 
     if ( ! defined $e1 || ! defined $e2 ) {
         return TRUE if !defined $e1 && !defined $e2;
-        push @Data_Stack, { vals => [$e1, $e2] };
+        push @$data_stack, { vals => [$e1, $e2] };
         return FALSE;
     };
 
     return TRUE if $e1 eq $e2;
+
     if ( ref $e1 && ref $e2 ) {
         my $e2_ref = "$e2";
-        return TRUE if defined $Seen_Refs{$e1} && $Seen_Refs{$e1} eq $e2_ref;
-        $Seen_Refs{$e1} = $e2_ref;
+        return TRUE if defined $seen_refs->{$e1} && $seen_refs->{$e1} eq $e2_ref;
+        $seen_refs->{$e1} = $e2_ref;
     };
 
     if (ref $e1 eq 'ARRAY' and ref $e2 eq 'ARRAY') {
-        return $self->_eq_array($e1, $e2);
+        return $self->_eq_array($e1, $e2, $data_stack, $seen_refs);
     }
     elsif (ref $e1 eq 'HASH' and ref $e2 eq 'HASH') {
-        return $self->_eq_hash($e1, $e2);
+        return $self->_eq_hash($e1, $e2, $data_stack, $seen_refs);
     }
     elsif (ref $e1 eq 'REF' and ref $e2 eq 'REF') {
-        push @Data_Stack, { type => 'REF', vals => [$e1, $e2] };
-        my $ok = $self->_deep_check($$e1, $$e2);
-        pop @Data_Stack if $ok;
+        push @$data_stack, { type => 'REF', vals => [$e1, $e2] };
+        my $ok = $self->_deep_check($$e1, $$e2, $data_stack, $seen_refs);
+        pop @$data_stack if $ok;
         return $ok;
     }
     elsif (ref $e1 eq 'SCALAR' and ref $e2 eq 'SCALAR') {
-        push @Data_Stack, { type => 'REF', vals => [$e1, $e2] };
-        return $self->_deep_check($$e1, $$e2);
+        push @$data_stack, { type => 'REF', vals => [$e1, $e2] };
+        return $self->_deep_check($$e1, $$e2, $data_stack, $seen_refs);
     }
     else {
-        push @Data_Stack, { vals => [$e1, $e2] };
+        push @$data_stack, { vals => [$e1, $e2] };
     };
+
     return FALSE;
 };
 
 
 # Checks if arrays are equal
 sub _eq_array  {
-    my ($self, $a1, $a2) = @_;
+    my ($self, $a1, $a2, $data_stack, $seen_refs) = @_;
+
     return TRUE if $a1 eq $a2;
 
     my $ok = TRUE;
     my $max = $#$a1 > $#$a2 ? $#$a1 : $#$a2;
-    for (0..$max) {
+
+    foreach (0..$max) {
         my $e1 = $_ > $#$a1 ? $DNE : $a1->[$_];
         my $e2 = $_ > $#$a2 ? $DNE : $a2->[$_];
 
-        push @Data_Stack, { type => 'ARRAY', idx => $_, vals => [$e1, $e2] };
-        $ok = $self->_deep_check($e1,$e2);
-        pop @Data_Stack if $ok;
+        push @$data_stack, { type => 'ARRAY', idx => $_, vals => [$e1, $e2] };
+        $ok = $self->_deep_check($e1, $e2, $data_stack, $seen_refs);
+        pop @$data_stack if $ok;
 
         last unless $ok;
     };
+
     return $ok;
 };
 
 
 # Checks if hashes are equal
 sub _eq_hash {
-    my ($self, $a1, $a2) = @_;
+    my ($self, $a1, $a2, $data_stack, $seen_refs) = @_;
+
     return TRUE if $a1 eq $a2;
 
     my $ok = TRUE;
@@ -558,9 +586,9 @@ sub _eq_hash {
         my $e1 = exists $a1->{$k} ? $a1->{$k} : $DNE;
         my $e2 = exists $a2->{$k} ? $a2->{$k} : $DNE;
 
-        push @Data_Stack, { type => 'HASH', idx => $k, vals => [$e1, $e2] };
-        $ok = $self->_deep_check($e1, $e2);
-        pop @Data_Stack if $ok;
+        push @$data_stack, { type => 'HASH', idx => $k, vals => [$e1, $e2] };
+        $ok = $self->_deep_check($e1, $e2, $data_stack, $seen_refs);
+        pop @$data_stack if $ok;
 
         last unless $ok;
     };
@@ -571,27 +599,27 @@ sub _eq_hash {
 
 # Dumps the differences for deep structures
 sub _format_stack {
-    my ($self, @Stack) = @_;
+    my ($self, $data_stack) = @_;
 
     my $var = '$FOO';
     my $did_arrow = 0;
-    foreach my $entry (@Stack) {
+    foreach my $entry (@$data_stack) {
         my $type = $entry->{type} || '';
         my $idx  = $entry->{'idx'};
-        if( $type eq 'HASH' ) {
+        if ($type eq 'HASH') {
             $var .= "->" unless $did_arrow++;
             $var .= "{$idx}";
         }
-        elsif( $type eq 'ARRAY' ) {
+        elsif ($type eq 'ARRAY') {
             $var .= "->" unless $did_arrow++;
             $var .= "[$idx]";
         }
-        elsif( $type eq 'REF' ) {
+        elsif ($type eq 'REF') {
             $var = "\${$var}";
         };
     };
 
-    my @vals = @{$Stack[-1]{vals}}[0,1];
+    my @vals = @{$data_stack->[-1]{vals}}[0,1];
 
     my @vars = ();
     ($vars[0] = $var) =~ s/\$FOO/  \$a/;
@@ -621,10 +649,12 @@ sub __isa {
 };
 
 
+no constant::boolean;
+no Symbol::Util;
+
+
 1;
 
-
-__END__
 
 =begin umlwiki
 
@@ -657,8 +687,8 @@ __END__
  assert_deep_not_equals( value1 : Ref, value2 : Ref, message : Str = undef )
  assert_isa( class : Str, object : Defined, message : Str = undef )
  assert_not_isa( class : Str, object : Defined, message : Str = undef )
- assert_raises( expected : Any, code : CoreRef, message : Str = undef )
- assert_test( code : CoreRef, message : Str = undef )
+ assert_raises( expected : Any, code : CodeRef, message : Str = undef )
+ assert_test( code : CodeRef, message : Str = undef )
  <<constant>> ASSERT() : Bool                                                        ]
 
 [Test::Assert] ---> <<exception>> [Exception::Assertion]
@@ -793,7 +823,7 @@ Checks if I<value> is a I<class> or not.
 
   assert_isa( 'My::Class', $obj );
 
-=item assert_raises( I<expected> : Any, I<code> : CoreRef, I<message> : Str = undef )
+=item assert_raises( I<expected> : Any, I<code> : CodeRef, I<message> : Str = undef )
 
 Runs the I<code> and checks if it raises the I<expected> exception.
 
@@ -811,7 +841,7 @@ a regexp, the string representation of exception is matched against regexp.
   assert_raises( 'foo', sub { die 'foo' } );
   assert_raises( ['Exception::Base'], sub { Exception::Base->throw } );
 
-=item assert_test( I<code> : CoreRef, I<message> : Str = undef )
+=item assert_test( I<code> : CodeRef, I<message> : Str = undef )
 
 Wraps L<Test::Builder> based test function and throws L<Exception::Assertion>
 if the test is failed.  The plan test have to be disabled manually.  The
@@ -834,17 +864,18 @@ L<Exception::Assertion>, L<Test::Unit::Lite>.
 
 =head1 BUGS
 
-If you find the bug, please report it.
+If you find the bug or want to implement new features, please report it at
+L<http://rt.cpan.org/NoAuth/Bugs.html?Dist=Test-Assert>
 
 =for readme continue
 
 =head1 AUTHOR
 
-Piotr Roszatycki E<lt>dexter@debian.orgE<gt>
+Piotr Roszatycki <dexter@cpan.org>
 
 =head1 COPYRIGHT
 
-Copyright (C) 2008, 2009 by Piotr Roszatycki E<lt>dexter@debian.orgE<gt>.
+Copyright (C) 2008, 2009 by Piotr Roszatycki <dexter@cpan.org>.
 
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.

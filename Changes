@@ -1,4 +1,25 @@
 ------------------------------------------------------------------------
+0.0503 | Piotr Roszatycki <dexter@cpan.org> | 2009-11-29
+
+Changes:
+
+* Uses Symbol::Util as exported.  All exported symbols can be removed with
+  "no Test::Assert" statement.
+
+* Minor refactoring of "assert_deep_equals" method and its pivate methods.
+
+* Requires Symbol::Util >= 0.0202 and constant::boolean >= 0.02.
+
+* Build requires Class::Inspector.
+
+------------------------------------------------------------------------
+0.0502 | Piotr Roszatycki <dexter@cpan.org> | 2009-04-19
+
+Fixes:
+
+* Fixed error message for assert_deep_equals.
+
+------------------------------------------------------------------------
 0.0501 | Piotr Roszatycki <dexter@debian.org> | 2009-01-02
 
 Fixes:

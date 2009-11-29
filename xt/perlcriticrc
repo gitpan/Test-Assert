@@ -12,4 +12,4 @@ max_characters = 70
 minimum_regex_length_to_complain_about = 75
 
 [TestingAndDebugging::ProhibitNoWarnings]
-allow = numeric redefine
+allow = numeric once redefine

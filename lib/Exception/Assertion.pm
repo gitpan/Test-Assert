@@ -16,7 +16,7 @@ Exception::Assertion - Thrown when assertion failed
       Exception::Assertion->throw(
           message => $message,
           reason  => 'foo failed',
-      );
+      ) unless $condition;
   }
 
   assert_foo( 0, 'assert_foo failed' );
@@ -24,66 +24,40 @@ Exception::Assertion - Thrown when assertion failed
 =head1 DESCRIPTION
 
 This class extends standard L<Exception::Base> and is thrown when assertion is
-failed.
-
-=for readme stop
+failed.  It contains additional attribute C<reason> which represents detailed
+message about reason of failed assertion.  The exception has also raised
+verbosity.
 
 =cut
 
 use 5.006;
+
 use strict;
 use warnings;
 
-our $VERSION = 0.05_01;
+our $VERSION = '0.0503';
 
 
-use Exception::Base 0.21 (
-    'Exception::Assertion' => {
-        has       => 'reason',
-        message   => 'Unknown assertion failed',
-        verbosity => 3,
-        string_attributes => [ 'message', 'reason' ],
-    },
-);
+=head1 INHERITANCE
 
-
-1;
-
-
-__END__
-
-=begin umlwiki
-
-= Class Diagram =
-
-[                    <<exception>>
-                  Exception::Assertion
- ----------------------------------------------------------
- +message : Str = "Unknown assertion failed"          {new}
- +verbosity : Int = 3                                 {new}
- +reason : Str                                        {new}
- #string_attributes : ArrayRef[Str] = ["message", "reason"]
- ----------------------------------------------------------]
-
-[Exception::Assertion] ---|> [Exception::Base]
-
-=end umlwiki
-
-=head1 BASE CLASSES
-
-=over
+=over 2
 
 =item *
 
-L<Exception::Base>
+extends L<Exception::Base>
 
 =back
+
+=cut
+
+# Extend Exception::Base class
+BEGIN {
 
 =head1 CONSTANTS
 
 =over
 
-=item ATTRS
+=item ATTRS : HashRef
 
 Declaration of class attributes as reference to hash.
 
@@ -98,21 +72,38 @@ descriptions.
 
 =over
 
-=item message : Str = "Unknown assertion failed" {rw}
+=cut
+
+    my %ATTRS = ();
+    my @ATTRS_RW = ();
+
+=item reason : Str
+
+Contains the additional message filled by assertion method.
+
+=cut
+
+    push @ATTRS_RW, 'reason';
+
+=item message : Str = "Unknown assertion failed"
 
 Contains the message of the exception.  This class overrides the default value
 from L<Exception::Base> class.
 
-=item verbosity : Int = 3 {rw}
+=cut
+
+    $ATTRS{message} = 'Unknown assertion failed';
+
+=item verbosity : Int = 3
 
 The default verbosity for assertion exception is raised to 3.  This class
 overrides the default value from L<Exception::Base> class.
 
-=item reason : Str {rw}
+=cut
 
-Contains the additional message filled by assertion method.
+    $ATTRS{verbosity} = 3;
 
-=item string_attributes : ArrayRef = ['message', 'reason']
+=item string_attributes : ArrayRef[Str] = ["message", "reason"]
 
 Meta-attribute contains the format of string representation of exception
 object.  This class overrides the default value from L<Exception::Base>
@@ -120,24 +111,51 @@ class.
 
 =back
 
+=cut
+
+    $ATTRS{string_attributes} = [ 'message', 'reason' ];
+
+    use Exception::Base 0.21;
+    Exception::Base->import(
+        'Exception::Assertion' => {
+            has   => { rw => \@ATTRS_RW },
+            %ATTRS,
+        },
+    );
+};
+
+
+1;
+
+
+=begin umlwiki
+
+= Class Diagram =
+
+[                    <<exception>>
+                  Exception::Assertion
+ ----------------------------------------------------------
+ +message : Str = "Unknown assertion failed"
+ +verbosity : Int = 3
+ +reason : Str {rw}
+ #string_attributes : ArrayRef[Str] = ["message", "reason"]
+ ----------------------------------------------------------]
+
+[Exception::Assertion] ---|> [Exception::Base]
+
+=end umlwiki
+
 =head1 SEE ALSO
 
 L<Exception::Base>, L<Test::Assertion>.
 
-=head1 BUGS
-
-If you find the bug, please report it.
-
-=for readme continue
-
 =head1 AUTHOR
 
-Piotr Roszatycki E<lt>dexter@debian.orgE<gt>
+Piotr Roszatycki <dexter@cpan.org>
 
-=head1 LICENSE
+=head1 COPYRIGHT
 
-Copyright (C) 2008, 2009 by Piotr Roszatycki E<lt>dexter@debian.orgE<gt>.
-
+Copyright (C) 2008, 2009 by Piotr Roszatycki <dexter@cpan.org>.
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.
 

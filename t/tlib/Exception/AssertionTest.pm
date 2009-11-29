@@ -3,10 +3,22 @@ package Exception::AssertionTest;
 use strict;
 use warnings;
 
+use Test::Unit::Lite;
 use parent 'Test::Unit::TestCase';
+
 use Test::Assert ':all';
 
 use Exception::Assertion;
+
+sub test___api {
+    assert_deep_equals(
+        [ qw(
+            ATTRS
+            reason
+        ) ],
+        [ grep { ! /^_/ } @{ Class::Inspector->functions('Exception::Assertion') } ]
+    );
+};
 
 sub test___isa {
     my $obj = Exception::Assertion->new;

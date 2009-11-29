@@ -3,11 +3,69 @@ package Test::AssertTest;
 use strict;
 use warnings;
 
-use parent 'Test::Assert';
-use parent 'Test::Unit::TestCase';
+use Test::Unit::Lite;
+use parent 'Test::Assert', 'Test::Unit::TestCase';
+
 use Test::Assert ':all';
 
 use Exception::Assertion;
+
+use Class::Inspector;
+
+{
+    my @exports = qw(
+        ASSERT
+        assert_deep_equals
+        assert_deep_not_equals
+        assert_equals
+        assert_false
+        assert_isa
+        assert_matches
+        assert_not_equals
+        assert_not_isa
+        assert_not_matches
+        assert_not_null
+        assert_null
+        assert_num_equals
+        assert_num_not_equals
+        assert_raises
+        assert_str_equals
+        assert_str_not_equals
+        assert_test
+        assert_true
+        fail
+    );
+
+    sub test___api {
+        assert_deep_equals(
+            [ @exports, qw(
+                import
+                unimport
+            ) ],
+            [ grep { ! /^_/ } @{ Class::Inspector->functions('Test::Assert') } ]
+        );
+    };
+
+    sub test___import_all {
+        {
+            package Test::AssertTest::ImportAll::Target;
+            Test::Assert->import(':all');
+        };
+        assert_deep_equals(
+            [ @exports ],
+            [ sort keys %{*Test::AssertTest::ImportAll::Target::} ]
+        );
+
+        {
+            package Test::AssertTest::ImportAll::Target;
+            Test::Assert->unimport;
+        };
+        assert_deep_equals(
+            [],
+            [ sort keys %{*Test::AssertTest::ImportAll::Target::} ]
+        );
+    };
+};
 
 sub test_assert_fail {
     assert_raises( {message=>undef, reason=>undef}, sub { fail() } );
@@ -395,9 +453,9 @@ sub test_assert_deep_equals {
                    sub { assert_deep_equals( 0, '' ) } );
     assert_raises( {reason=>'Both arguments were not references'},
                    sub { assert_deep_equals( '', 0 ) } );
-    assert_raises( {reason=>qr/must be a regexp/},
+    assert_raises( {reason=>qr/must be a reference/},
                    sub { assert_deep_equals( 0, [] ) } );
-    assert_raises( {reason=>qr/must be a regexp/},
+    assert_raises( {reason=>qr/must be a reference/},
                    sub { assert_deep_equals( [], 0 ) } );
     assert_raises( {reason=>qr/'ARRAY.0x\w+.'\n/}, sub { assert_deep_equals( [], {} ) } );
     assert_raises( {reason=>qr/'ARRAY.0x\w+.'\n/}, sub { assert_deep_equals( [1,2], {1,2} ) } );
@@ -451,9 +509,9 @@ sub test_assert_deep_not_equals {
                    sub { assert_deep_not_equals( undef, 0 ) } );
     assert_raises( {reason=>'Both arguments were not references'},
                    sub { assert_deep_not_equals( 0, undef ) } );
-    assert_raises( {reason=>qr/must be a regexp/},
+    assert_raises( {reason=>qr/must be a reference/},
                    sub { assert_deep_not_equals( 0, [] ) } );
-    assert_raises( {reason=>qr/must be a regexp/},
+    assert_raises( {reason=>qr/must be a reference/},
                    sub { assert_deep_not_equals( [], 0 ) } );
 
     assert_raises( {reason=>'Both structures should differ'}, sub { assert_deep_not_equals( [ 1 ], [ 1 ] ) } );

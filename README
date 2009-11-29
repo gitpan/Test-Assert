@@ -2,28 +2,26 @@ NAME
     Test::Assert - Assertion methods for those who like JUnit.
 
 SYNOPSIS
-      # Use as base class
-      package My::TestMethod;
-      use base 'Test::Assert';
-      sub test_method {
-        my $self = shift;
-        $self->assert_true(1, "pass");
-        $self->assert_true(0, "fail");
-      }
-
       # Use as imported methods
+      #
       package My::Test;
+
       use Test::Assert ':all';
+
       assert_true(1, "pass");
       assert_true(0, "fail");
+
       use Test::More;
       assert_test(sub { require_ok($module) });
 
       # Use for debugging purposes
       # Assertions are compiled only if Test::Assert was used
-      # in the main package.
+      # from the main package.
+      #
       package My::Package;
-      use Test::Assert 'fail', 'ASSERT';
+
+      use Test::Assert ':assert';
+
       my $state = do_something();
       assert_true($state >= 1 && $state <=2) if ASSERT;
       if ($state == 1) {
@@ -33,32 +31,40 @@ SYNOPSIS
           # 2nd and last state
           do_bar();
       }
+
       my $a = get_a();
       my $b = get_b();
       assert_num_not_equals(0, $b) if ASSERT;
       my $c = $a / $b;
 
+      # Clean the namespace
+      no Test::Assert;
+
+      # From command line
       $ perl -MTest::Assert script.pl  # sets Test::Assert::ASSERT to 1
 
 DESCRIPTION
     This class provides a set of assertion methods useful for writing tests.
-    The API is based on JUnit4 and Test::Unit and the methods die on
+    The API is based on JUnit4 and Test::Unit::Lite and the methods die on
     failure.
 
+    These assertion methods might be not useful for common
+    Test::Builder-based (Test::Simple, Test::More, etc.) test units.
+
     The assertion methods can be used in class which is derived from
-    Test::Assert or used as standard Perl functions after importing them
+    `Test::Assert' or used as standard Perl functions after importing them
     into user's namespace.
 
-    Test::Assert can also wrap standard Test::Simple, Test::More or other
+    `Test::Assert' can also wrap standard Test::Simple, Test::More or other
     Test::Builder-based tests.
 
     The assertions can be also used for run-time checking.
 
 AUTHOR
-    Piotr Roszatycki <dexter@debian.org>
+    Piotr Roszatycki <dexter@cpan.org>
 
 COPYRIGHT
-    Copyright (C) 2008, 2009 by Piotr Roszatycki <dexter@debian.org>.
+    Copyright (C) 2008, 2009 by Piotr Roszatycki <dexter@cpan.org>.
 
     This program is free software; you can redistribute it and/or modify it
     under the same terms as Perl itself.
