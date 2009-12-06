@@ -15,24 +15,24 @@ not run its Makefile.PL or Build.PL.
 Hash: SHA1
 
 SHA1 6d87d83ead8d5669617a996c96e2e918106b73f1 Build.PL
-SHA1 d8bbbd79231392aef6a92310da509d3520f61195 Changes
+SHA1 ea7c04dd3a9e24e9df7012708e4cea15bfda0a27 Changes
 SHA1 74b1c398020b9c1e8849b7982751cb70ecc5de8d LICENSE
 SHA1 73d25e25faaa1f6def12b5c31767afd92b203e55 MANIFEST
 SHA1 a1dbf257177f9f76372ac111f127bc34f4f3fb24 MANIFEST.SKIP
-SHA1 e08e1444fb2c6d569dad7fa2c54b454995d0e61f META.yml
+SHA1 6936d5812a7352b451a100de2bc3c8878480db8b META.yml
 SHA1 6ba6cea24cfe0f26589d5cd3360cba7e4e49178d Makefile.PL
 SHA1 3485bf759800f328e27a2a90c002e2e142ffd37c README
 SHA1 da4c3289dd58f17c27814261a5a2cc0f7444ac17 eg/assert_raises.pl
 SHA1 40f2f685ed6b9be41dd4daa38fb4575e9b5c5e23 eg/assert_test_differences.pl
-SHA1 0aa3f52a45af361fe4071204845843988ffc6fbb lib/Exception/Assertion.pm
-SHA1 677bc61c3b3e52e7b09485f516f04924da938075 lib/Test/Assert.pm
+SHA1 a5591bd4ae5b38a21b247aa1a145cd9cb486a5be lib/Exception/Assertion.pm
+SHA1 7f563b29d9107fca4e4729cde7aac59b66a0a344 lib/Test/Assert.pm
 SHA1 0fc088def6dbc804cbb618121d19f6c63b2eee96 t/010_debug_enabled.t
 SHA1 ad98f8b5c356e6d67dab59733c89dd1b935e8e96 t/020_debug_disabled.t
 SHA1 ef22915e0a584556de85c247426928dff1499391 t/030_debug_default.t
 SHA1 63fcef5b065118a961bece184670e3aba405060b t/all_tests.t
 SHA1 b6baecd4dbd78c168db5efcf7ce9725269c1003b t/test.pl
 SHA1 8609d33bdea37ba902754aeaf5973bb8ffa1f56d t/tlib/Exception/AssertionTest.pm
-SHA1 39473ef9fcb041e7d8951e16760b856d9bd83474 t/tlib/Test/AssertTest.pm
+SHA1 14e5d5f205ea225d1b0f383da35dfddea12ab9d2 t/tlib/Test/AssertTest.pm
 SHA1 90353a99ac0f719b6f3e58029804d8556cedc2ab xt/check_changes.t
 SHA1 a56d0c02b6c992e04a77d13a6ee89504bd718572 xt/consistent_version_numbers.t
 SHA1 67bb4c141ea95809f3db2d526ce91d9e6d894756 xt/copyright.t
@@ -51,7 +51,7 @@ SHA1 a38994922fda6d64e2ee75198fadc464a221fea9 xt/signature.t
 -----BEGIN PGP SIGNATURE-----
 Version: GnuPG v1.4.9 (GNU/Linux)
 
-iEYEARECAAYFAksSyPwACgkQhMHHe8CxCls7aQCbBqZOWlQyyoyDbxPnhedG+gnA
-WeYAoL348Qry7psx7nfPHYtd5nZe+6fj
-=KYIO
+iEYEARECAAYFAkscNLsACgkQhMHHe8CxCls/+ACfW7Xjqva1HiX1EAIsCGrFwCBG
+sZ4An3Ul3Y/o/7n6073C/Y6IRNm/IWvg
+=5DlX
 -----END PGP SIGNATURE-----

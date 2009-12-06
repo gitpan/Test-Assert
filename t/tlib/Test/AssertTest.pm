@@ -36,6 +36,8 @@ use Class::Inspector;
         fail
     );
 
+    my @exports_assert = grep { $_ ne 'fail' } @exports;
+
     sub test___api {
         assert_deep_equals(
             [ @exports, qw(
@@ -63,6 +65,26 @@ use Class::Inspector;
         assert_deep_equals(
             [],
             [ sort keys %{*Test::AssertTest::ImportAll::Target::} ]
+        );
+    };
+
+    sub test___import_assert {
+        {
+            package Test::AssertTest::ImportAssert::Target;
+            Test::Assert->import(':assert');
+        };
+        assert_deep_equals(
+            [ @exports_assert ],
+            [ sort keys %{*Test::AssertTest::ImportAssert::Target::} ]
+        );
+
+        {
+            package Test::AssertTest::ImportAssert::Target;
+            Test::Assert->unimport;
+        };
+        assert_deep_equals(
+            [],
+            [ sort keys %{*Test::AssertTest::ImportAssert::Target::} ]
         );
     };
 };

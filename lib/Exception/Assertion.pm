@@ -35,7 +35,7 @@ use 5.006;
 use strict;
 use warnings;
 
-our $VERSION = '0.0503';
+our $VERSION = '0.0504';
 
 
 =head1 INHERITANCE
@@ -52,6 +52,7 @@ extends L<Exception::Base>
 
 # Extend Exception::Base class
 BEGIN {
+
 
 =head1 CONSTANTS
 
@@ -77,6 +78,7 @@ descriptions.
     my %ATTRS = ();
     my @ATTRS_RW = ();
 
+
 =item reason : Str
 
 Contains the additional message filled by assertion method.
@@ -84,6 +86,7 @@ Contains the additional message filled by assertion method.
 =cut
 
     push @ATTRS_RW, 'reason';
+
 
 =item message : Str = "Unknown assertion failed"
 
@@ -94,6 +97,7 @@ from L<Exception::Base> class.
 
     $ATTRS{message} = 'Unknown assertion failed';
 
+
 =item verbosity : Int = 3
 
 The default verbosity for assertion exception is raised to 3.  This class
@@ -102,6 +106,7 @@ overrides the default value from L<Exception::Base> class.
 =cut
 
     $ATTRS{verbosity} = 3;
+
 
 =item string_attributes : ArrayRef[Str] = ["message", "reason"]
 
@@ -114,6 +119,7 @@ class.
 =cut
 
     $ATTRS{string_attributes} = [ 'message', 'reason' ];
+
 
     use Exception::Base 0.21;
     Exception::Base->import(

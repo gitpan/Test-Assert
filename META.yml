@@ -1,6 +1,6 @@
 ---
 name: Test-Assert
-version: 0.0503
+version: 0.0504
 author:
   - 'Piotr Roszatycki <dexter@cpan.org>'
 abstract: Assertion methods for those who like JUnit.
@@ -21,10 +21,10 @@ requires:
 provides:
   Exception::Assertion:
     file: lib/Exception/Assertion.pm
-    version: 0.0503
+    version: 0.0504
   Test::Assert:
     file: lib/Test/Assert.pm
-    version: 0.0503
+    version: 0.0504
 generated_by: Module::Build version 0.35
 meta-spec:
   url: http://module-build.sourceforge.net/META-spec-v1.4.html

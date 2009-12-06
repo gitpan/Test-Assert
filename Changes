@@ -1,4 +1,11 @@
 ------------------------------------------------------------------------
+0.0504 | Piotr Roszatycki <dexter@cpan.org> | 2009-12-06
+
+Fixes:
+
+* The ":assert" tag imports also "ASSERT" constant.
+
+------------------------------------------------------------------------
 0.0503 | Piotr Roszatycki <dexter@cpan.org> | 2009-11-29
 
 Changes:

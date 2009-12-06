@@ -75,7 +75,7 @@ use 5.006;
 use strict;
 use warnings;
 
-our $VERSION = '0.0503';
+our $VERSION = '0.0504';
 
 
 use Exception::Base (
@@ -115,7 +115,7 @@ sub import {
     my @export_ok = ( 'ASSERT', grep { /^(assert_|fail)/ } keys %{ stash(__PACKAGE__) } );
     my %export_tags = (
         all => [ @export_ok ],
-        assert => [ grep { /^assert_/i } @export_ok ],
+        assert => [ grep { /^(assert_|ASSERT$)/ } @export_ok ],
     );
 
     return export_package($caller, $package, {
@@ -707,7 +707,7 @@ Thrown whether an assertion failed.
 
 =back
 
-=head1 IMPORTS
+=head1 USAGE
 
 By default, the class does not export its symbols.
 
